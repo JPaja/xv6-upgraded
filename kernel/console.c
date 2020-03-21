@@ -18,14 +18,15 @@
 static void consputc(int);
 
 #define ScreenSize (48*80)
+#define Terminals 6
 
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
-static ushort terminals[6][ScreenSize];
-static int positions[6];
+static ushort terminals[Terminals][ScreenSize];
+static int positions[Terminals];
 static int selectedTerminal = 1;
 
 
-static int panicked = 0;
+static int panicked[Terminals];
 
 static struct {
 	struct spinlock lock;
@@ -125,55 +126,56 @@ panic(char *s)
 	getcallerpcs(&s, pcs);
 	for(i=0; i<10; i++)
 		cprintf(" %p", pcs[i]);
-	panicked = 1; // freeze other CPU
+	struct inode* node = myproc()->cwd;
+	panicked[node->minor -1] = 1; // freeze other CPU
 	for(;;)
 		;
 }
 
 #define BACKSPACE 0x100
 #define CRTPORT 0x3d4
-static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
+
 
 static void
 cgaputc(int c)
 {
 
 	struct inode* node = myproc()->cwd;
-
+	int terminal = node->minor -1;
+	int pos = positions[terminal];
 	
 	// Cursor position: col + 80*row.
-	outb(CRTPORT, 14);
-	pos = inb(CRTPORT+1) << 8;
-	outb(CRTPORT, 15);
-	pos |= inb(CRTPORT+1);
+	//outb(CRTPORT, 14);
+	//pos = inb(CRTPORT+1) << 8;
+	//outb(CRTPORT, 15);
+	//pos |= inb(CRTPORT+1);
 
 	if(c == '\n')
 		pos += 80 - pos%80;
 	else if(c == BACKSPACE){
 		if(pos > 0) --pos;
 	} else
-		crt[pos++] = (c&0xff) | 0x0700;  // black on white
+		terminals[terminal][pos++] = (c&0xff) | 0x0700;  // black on white
 
 	if(pos < 0 || pos > 25*80)
 		panic("pos under/overflow");
 
 	if((pos/80) >= 24){  // Scroll up.
-		memmove(crt, crt+80, sizeof(crt[0])*23*80);
+		memmove(terminals[terminal], terminals[terminal]+80, sizeof(terminals[terminal][0])*23*80);
 		pos -= 80;
-		memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
+		memset(terminals[terminal]+pos, 0, sizeof(terminals[terminal][0])*(24*80 - pos));
 	}
 
-	outb(CRTPORT, 14);
-	outb(CRTPORT+1, pos>>8);
-	outb(CRTPORT, 15);
-	outb(CRTPORT+1, pos);
-	crt[pos] = ' ' | 0x0700;
+
+	terminals[terminal][pos] = ' ' | 0x0700;
+	positions[terminal] = pos;
 }
 
 void
 consputc(int c)
 {
-	if(panicked){
+	struct inode* node = myproc()->cwd;
+	if(panicked[node->minor -1]){
 		cli();
 		for(;;)
 			;
@@ -247,7 +249,7 @@ consoleread(struct inode *ip, char *dst, int n)
 	int c;
 
 	// XXX: Ukloniti ovaj deo.
-	if (ip->minor != 1)
+	if (ip->minor != selectedTerminal)
 		return 0;
 
 	iunlock(ip);
@@ -288,13 +290,21 @@ consolewrite(struct inode *ip, char *buf, int n)
 	int i;
 
 	// XXX: Ukloniti ovaj deo.
-	if (ip->minor != 1)
-		return n;
+
 
 	iunlock(ip);
 	acquire(&cons.lock);
 	for(i = 0; i < n; i++)
 		consputc(buf[i] & 0xff);
+	if (ip->minor == selectedTerminal)
+	{
+		//memmove(crt,terminals[ip->minor - 1],ScreenSize);
+		//int pos = positions[ip->minor -1];
+		//outb(CRTPORT, 14);
+		//outb(CRTPORT+1, pos>>8);
+		//outb(CRTPORT, 15);
+		//outb(CRTPORT+1, pos);
+	}
 	release(&cons.lock);
 	ilock(ip);
 
@@ -309,7 +319,18 @@ consoleinit(void)
 	devsw[CONSOLE].write = consolewrite;
 	devsw[CONSOLE].read = consoleread;
 	cons.locking = 1;
-
+	memset(crt,0, ScreenSize);
+	for (int i = 0; i < Terminals; i++)
+	{
+		positions[i] = 0;
+		panicked[i] = 0;
+		memset(terminals[i], 0, ScreenSize);
+	}
+	
+	//outb(CRTPORT, 14);
+	//outb(CRTPORT+1, pos>>8);
+	//outb(CRTPORT, 15);
+	//outb(CRTPORT+1, pos);
 	ioapicenable(IRQ_KBD, 0);
 }
 
