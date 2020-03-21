@@ -234,6 +234,10 @@ QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,
 qemu: fs.img xv6.img
 	$(QEMU) $(QEMUOPTS)
 
+qemu-win: fs.img xv6.img
+	export DISPLAY=:0
+	$(QEMU) $(QEMUOPTS)
+
 qemu-memfs: xv6memfs.img
 	$(QEMU) -drive file=xv6memfs.img,index=0,media=disk,format=raw -smp $(CPUS) -m 256
 
