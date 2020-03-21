@@ -126,37 +126,65 @@ panic(char *s)
 #define CRTPORT 0x3d4
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
+static int selectedScreen = 1;
+static ushort screens[6][24*80];// (ushort*)P2V(0xb8000);  // CGA memory
+static int positions[6];
+
+static void setScreen(int screen)
+{
+	selectedScreen = screen;
+	//memset(crt,0,24*80);
+	memmove(crt,screens[screen-1],24*80);
+	int pos = positions[screen-1];
+	outb(CRTPORT, 14);
+	outb(CRTPORT+1, pos>>8);
+	outb(CRTPORT, 15);
+	outb(CRTPORT+1, pos);
+}
+
+
+void setCgt(int pos, ushort value)
+{
+
+}
+
 static void
 cgaputc(int c)
 {
-	int pos;
+	int pos = positions[selectedScreen -1];
 
 	// Cursor position: col + 80*row.
-	outb(CRTPORT, 14);
-	pos = inb(CRTPORT+1) << 8;
-	outb(CRTPORT, 15);
-	pos |= inb(CRTPORT+1);
+	//outb(CRTPORT, 14);
+	//pos = inb(CRTPORT+1) << 8;
+	//outb(CRTPORT, 15);
+	//pos |= inb(CRTPORT+1);
 
 	if(c == '\n')
 		pos += 80 - pos%80;
 	else if(c == BACKSPACE){
 		if(pos > 0) --pos;
 	} else
+	{
+		screens[selectedScreen-1][pos] = (c&0xff) | 0x0700;
 		crt[pos++] = (c&0xff) | 0x0700;  // black on white
+	}
 
 	if(pos < 0 || pos > 25*80)
 		panic("pos under/overflow");
 
 	if((pos/80) >= 24){  // Scroll up.
 		memmove(crt, crt+80, sizeof(crt[0])*23*80);
+		memmove(screens[selectedScreen-1], screens[selectedScreen-1]+80, sizeof(screens[selectedScreen-1][0])*23*80);
 		pos -= 80;
 		memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
+		memmove(screens[selectedScreen-1], screens[selectedScreen-1]+80, sizeof(screens[selectedScreen-1][0])*23*80);
 	}
 
 	outb(CRTPORT, 14);
 	outb(CRTPORT+1, pos>>8);
 	outb(CRTPORT, 15);
 	outb(CRTPORT+1, pos);
+	positions[selectedScreen -1] = pos;
 	crt[pos] = ' ' | 0x0700;
 }
 
@@ -237,7 +265,7 @@ consoleread(struct inode *ip, char *dst, int n)
 	int c;
 
 	// XXX: Ukloniti ovaj deo.
-	if (ip->minor != 1)
+	if (ip->minor != selectedScreen)
 		return 0;
 
 	iunlock(ip);
@@ -278,7 +306,7 @@ consolewrite(struct inode *ip, char *buf, int n)
 	int i;
 
 	// XXX: Ukloniti ovaj deo.
-	if (ip->minor != 1)
+	if (ip->minor != selectedScreen)
 		return n;
 
 	iunlock(ip);
@@ -295,11 +323,18 @@ void
 consoleinit(void)
 {
 	initlock(&cons.lock, "console");
+	
+	for (int i =0; i < 6; i++)
+	{
+		positions[i] = 0;
+		memset(screens[i],0,24*80);
+	}
+	
+	memset(crt,0,24*80);
 
 	devsw[CONSOLE].write = consolewrite;
 	devsw[CONSOLE].read = consoleread;
 	cons.locking = 1;
-
 	ioapicenable(IRQ_KBD, 0);
 }
 
