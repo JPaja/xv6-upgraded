@@ -17,6 +17,14 @@
 
 static void consputc(int);
 
+#define ScreenSize (48*80)
+
+static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
+static ushort terminals[6][ScreenSize];
+static int positions[6];
+static int selectedTerminal = 1;
+
+
 static int panicked = 0;
 
 static struct {
@@ -129,8 +137,10 @@ static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 static void
 cgaputc(int c)
 {
-	int pos;
 
+	struct inode* node = myproc()->cwd;
+
+	
 	// Cursor position: col + 80*row.
 	outb(CRTPORT, 14);
 	pos = inb(CRTPORT+1) << 8;
