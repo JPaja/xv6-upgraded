@@ -15,18 +15,44 @@
 #include "proc.h"
 #include "x86.h"
 
-static void consputc(int);
+static void consputc(int,int);
 
-#define ScreenSize (48*80)
+#define ScreenSize (47*80)
 #define Terminals 6
 
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 static ushort terminals[Terminals][ScreenSize];
 static int positions[Terminals];
-static int selectedTerminal = 1;
+static int selectedTerminal = 0;
 
 
-static int panicked[Terminals];
+static int panicked = 0;
+
+#define BACKSPACE 0x100
+#define SWITCH 0x110
+
+#define CRTPORT 0x3d4
+
+#define INPUT_BUF 128
+struct {
+	char buf[INPUT_BUF];
+	uint r;  // Read index
+	uint w;  // Write index
+	uint e;  // Edit index
+} input;
+
+void setScreen(int terminal)
+{
+	if(selectedTerminal == terminal)
+		return;
+	selectedTerminal = terminal;
+	int pos = positions[terminal];
+	memmove(crt,terminals[terminal], ScreenSize);
+	outb(CRTPORT, 14);
+	outb(CRTPORT+1, pos>>8);
+	outb(CRTPORT, 15);
+	outb(CRTPORT+1, pos);
+}
 
 static struct {
 	struct spinlock lock;
@@ -34,7 +60,7 @@ static struct {
 } cons;
 
 static void
-printint(int xx, int base, int sign)
+printint(int terminal,int xx, int base, int sign)
 {
 	static char digits[] = "0123456789abcdef";
 	char buf[16];
@@ -55,7 +81,7 @@ printint(int xx, int base, int sign)
 		buf[i++] = '-';
 
 	while(--i >= 0)
-		consputc(buf[i]);
+		consputc(terminal, buf[i]);
 }
 
 // Print to the console. only understands %d, %x, %p, %s.
@@ -76,7 +102,7 @@ cprintf(char *fmt, ...)
 	argp = (uint*)(void*)(&fmt + 1);
 	for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
 		if(c != '%'){
-			consputc(c);
+			consputc(selectedTerminal,c);
 			continue;
 		}
 		c = fmt[++i] & 0xff;
@@ -84,25 +110,25 @@ cprintf(char *fmt, ...)
 			break;
 		switch(c){
 		case 'd':
-			printint(*argp++, 10, 1);
+			printint(selectedTerminal,*argp++, 10, 1);
 			break;
 		case 'x':
 		case 'p':
-			printint(*argp++, 16, 0);
+			printint(selectedTerminal,*argp++, 16, 0);
 			break;
 		case 's':
 			if((s = (char*)*argp++) == 0)
 				s = "(null)";
 			for(; *s; s++)
-				consputc(*s);
+				consputc(selectedTerminal,*s);
 			break;
 		case '%':
-			consputc('%');
+			consputc(selectedTerminal,'%');
 			break;
 		default:
 			// Print unknown % sequence to draw attention.
-			consputc('%');
-			consputc(c);
+			consputc(selectedTerminal,'%');
+			consputc(selectedTerminal,c);
 			break;
 		}
 	}
@@ -120,28 +146,26 @@ panic(char *s)
 	cli();
 	cons.locking = 0;
 	// use lapiccpunum so that we can call panic from mycpu()
-	cprintf("lapicid %d: panic: ", lapicid());
-	cprintf(s);
-	cprintf("\n");
+	cprintf(selectedTerminal,"lapicid %d: panic: ", lapicid());
+	cprintf(selectedTerminal,s);
+	cprintf(selectedTerminal,"\n");
 	getcallerpcs(&s, pcs);
 	for(i=0; i<10; i++)
-		cprintf(" %p", pcs[i]);
-	struct inode* node = myproc()->cwd;
-	panicked[node->minor -1] = 1; // freeze other CPU
+		cprintf(selectedTerminal," %p", pcs[i]);
+	panicked = 1;
 	for(;;)
 		;
 }
 
-#define BACKSPACE 0x100
-#define CRTPORT 0x3d4
+
 
 
 static void
-cgaputc(int c)
+cgaputc(int terminal,int c)
 {
 
-	struct inode* node = myproc()->cwd;
-	int terminal = node->minor -1;
+	//struct inode* node = myproc()->cwd;// myproc();//myproc()->cwd; 
+	//int terminal = 0;//node->minor -1;
 	int pos = positions[terminal];
 	
 	// Cursor position: col + 80*row.
@@ -155,46 +179,60 @@ cgaputc(int c)
 	else if(c == BACKSPACE){
 		if(pos > 0) --pos;
 	} else
-		terminals[terminal][pos++] = (c&0xff) | 0x0700;  // black on white
-
+	{
+		if (terminal == selectedTerminal)
+			crt[pos] =  (c &0xff) | 0x0700;
+		terminals[terminal][pos++] =  (c &0xff) | 0x0700;//(c&0xff) | 0x0700;  // black on white
+	}
 	if(pos < 0 || pos > 25*80)
 		panic("pos under/overflow");
 
 	if((pos/80) >= 24){  // Scroll up.
 		memmove(terminals[terminal], terminals[terminal]+80, sizeof(terminals[terminal][0])*23*80);
+		if (terminal == selectedTerminal)
+			memmove(crt, crt+80, sizeof(crt[0])*23*80);
 		pos -= 80;
 		memset(terminals[terminal]+pos, 0, sizeof(terminals[terminal][0])*(24*80 - pos));
+		if (terminal == selectedTerminal)
+			memmove(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
 	}
 
 
 	terminals[terminal][pos] = ' ' | 0x0700;
+	if (terminal == selectedTerminal)
+		crt[pos] = ' ' | 0x0700;
+
 	positions[terminal] = pos;
+	if (terminal == selectedTerminal)
+	{
+		outb(CRTPORT, 14);
+		outb(CRTPORT+1, pos>>8);
+		outb(CRTPORT, 15);
+		outb(CRTPORT+1, pos);
+	}
+
 }
 
 void
-consputc(int c)
+consputc(int terminal,int c)
 {
-	struct inode* node = myproc()->cwd;
-	if(panicked[node->minor -1]){
+	//struct inode* node = myproc()->cwd;//node->minor -1
+	if(panicked){
 		cli();
 		for(;;)
 			;
 	}
 
-	if(c == BACKSPACE){
-		uartputc('\b'); uartputc(' '); uartputc('\b');
-	} else
-		uartputc(c);
-	cgaputc(c);
+	if(terminal == selectedTerminal){
+		if(c == BACKSPACE){
+			uartputc('\b'); uartputc(' '); uartputc('\b');
+		} else
+			uartputc(c);
+	}
+	cgaputc(terminal,c);
 }
 
-#define INPUT_BUF 128
-struct {
-	char buf[INPUT_BUF];
-	uint r;  // Read index
-	uint w;  // Write index
-	uint e;  // Edit index
-} input;
+
 
 #define C(x)  ((x)-'@')  // Control-x
 
@@ -214,20 +252,38 @@ consoleintr(int (*getc)(void))
 			while(input.e != input.w &&
 			      input.buf[(input.e-1) % INPUT_BUF] != '\n'){
 				input.e--;
-				consputc(BACKSPACE);
+				consputc(selectedTerminal,BACKSPACE);
 			}
 			break;
 		case C('H'): case '\x7f':  // Backspace
 			if(input.e != input.w){
 				input.e--;
-				consputc(BACKSPACE);
+				consputc(selectedTerminal,BACKSPACE);
 			}
+			break;
+		case SWITCH + 0:
+			setScreen(0);
+			break;
+		case SWITCH + 1:
+			setScreen(1);
+			break;
+		case SWITCH + 2:
+			setScreen(2);
+			break;
+		case SWITCH + 3:
+			setScreen(3);
+			break;
+		case SWITCH + 4:
+			setScreen(4);
+			break;
+		case SWITCH + 5:
+			setScreen(5);
 			break;
 		default:
 			if(c != 0 && input.e-input.r < INPUT_BUF){
 				c = (c == '\r') ? '\n' : c;
 				input.buf[input.e++ % INPUT_BUF] = c;
-				consputc(c);
+				consputc(selectedTerminal,c);
 				if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
 					input.w = input.e;
 					wakeup(&input.r);
@@ -249,7 +305,7 @@ consoleread(struct inode *ip, char *dst, int n)
 	int c;
 
 	// XXX: Ukloniti ovaj deo.
-	if (ip->minor != selectedTerminal)
+	if (ip->minor != selectedTerminal + 1)
 		return 0;
 
 	iunlock(ip);
@@ -294,17 +350,10 @@ consolewrite(struct inode *ip, char *buf, int n)
 
 	iunlock(ip);
 	acquire(&cons.lock);
+	int terminal = ip->minor-1;
 	for(i = 0; i < n; i++)
-		consputc(buf[i] & 0xff);
-	if (ip->minor == selectedTerminal)
-	{
-		//memmove(crt,terminals[ip->minor - 1],ScreenSize);
-		//int pos = positions[ip->minor -1];
-		//outb(CRTPORT, 14);
-		//outb(CRTPORT+1, pos>>8);
-		//outb(CRTPORT, 15);
-		//outb(CRTPORT+1, pos);
-	}
+		consputc(terminal,buf[i] & 0xff);
+	
 	release(&cons.lock);
 	ilock(ip);
 
@@ -323,14 +372,9 @@ consoleinit(void)
 	for (int i = 0; i < Terminals; i++)
 	{
 		positions[i] = 0;
-		panicked[i] = 0;
 		memset(terminals[i], 0, ScreenSize);
 	}
 	
-	//outb(CRTPORT, 14);
-	//outb(CRTPORT+1, pos>>8);
-	//outb(CRTPORT, 15);
-	//outb(CRTPORT+1, pos);
 	ioapicenable(IRQ_KBD, 0);
 }
 

@@ -40,6 +40,12 @@ kbdgetc(void)
 		else if('A' <= c && c <= 'Z')
 			c += 'a' - 'A';
 	}
+    if(shift & ALT)
+	{
+		if(c >= '1' && c <= '6')
+			c = 0x110 + c - '1';
+	}
+
 	return c;
 }
 
