@@ -39,7 +39,7 @@ struct {
 	uint r;  // Read index
 	uint w;  // Write index
 	uint e;  // Edit index
-} input;
+} input[Terminals];
 
 void setScreen(int terminal)
 {
@@ -58,7 +58,7 @@ void setScreen(int terminal)
 static struct {
 	struct spinlock lock;
 	int locking;
-} cons;
+} cons[Terminals];
 
 static void
 printint(int terminal,int xx, int base, int sign)
@@ -92,18 +92,17 @@ cprintf(char *fmt, ...)
 	int i, c, locking;
 	uint *argp;
 	char *s;
-
-	locking = cons.locking;
+	int terminal = selectedTerminal;
+	locking = cons[terminal].locking;
 	if(locking)
-		acquire(&cons.lock);
+		acquire(&cons[terminal].lock);
 
 	if (fmt == 0)
 		panic("null fmt");
-
 	argp = (uint*)(void*)(&fmt + 1);
 	for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
 		if(c != '%'){
-			consputc(selectedTerminal,c);
+			consputc(terminal,c);
 			continue;
 		}
 		c = fmt[++i] & 0xff;
@@ -111,31 +110,31 @@ cprintf(char *fmt, ...)
 			break;
 		switch(c){
 		case 'd':
-			printint(selectedTerminal,*argp++, 10, 1);
+			printint(terminal,*argp++, 10, 1);
 			break;
 		case 'x':
 		case 'p':
-			printint(selectedTerminal,*argp++, 16, 0);
+			printint(terminal,*argp++, 16, 0);
 			break;
 		case 's':
 			if((s = (char*)*argp++) == 0)
 				s = "(null)";
 			for(; *s; s++)
-				consputc(selectedTerminal,*s);
+				consputc(terminal,*s);
 			break;
 		case '%':
-			consputc(selectedTerminal,'%');
+			consputc(terminal,'%');
 			break;
 		default:
 			// Print unknown % sequence to draw attention.
-			consputc(selectedTerminal,'%');
-			consputc(selectedTerminal,c);
+			consputc(terminal,'%');
+			consputc(terminal,c);
 			break;
 		}
 	}
 
 	if(locking)
-		release(&cons.lock);
+		release(&cons[terminal].lock);
 }
 
 void
@@ -145,14 +144,15 @@ panic(char *s)
 	uint pcs[10];
 
 	cli();
-	cons.locking = 0;
+	int terminal = selectedTerminal;
+	cons[terminal].locking = 0;
 	// use lapiccpunum so that we can call panic from mycpu()
-	cprintf(selectedTerminal,"lapicid %d: panic: ", lapicid());
-	cprintf(selectedTerminal,s);
-	cprintf(selectedTerminal,"\n");
+	cprintf(terminal,"lapicid %d: panic: ", lapicid());
+	cprintf(terminal,s);
+	cprintf(terminal,"\n");
 	getcallerpcs(&s, pcs);
 	for(i=0; i<10; i++)
-		cprintf(selectedTerminal," %p", pcs[i]);
+		cprintf(terminal," %p", pcs[i]);
 	panicked = 1;
 	for(;;)
 		;
@@ -195,7 +195,7 @@ cgaputc(int terminal,int c)
 		pos -= 80;
 		memset(terminals[terminal]+pos, 0, sizeof(terminals[terminal][0])*(24*80 - pos));
 		if (terminal == selectedTerminal)
-			memmove(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
+			memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
 	}
 
 
@@ -242,8 +242,8 @@ void
 consoleintr(int (*getc)(void))
 {
 	int c, doprocdump = 0;
-
-	acquire(&cons.lock);
+	int terminal = selectedTerminal;
+	acquire(&cons[terminal].lock);
 	while((c = getc()) >= 0){
 		switch(c){
 		case C('P'):  // Process listing.
@@ -251,16 +251,16 @@ consoleintr(int (*getc)(void))
 			doprocdump = 1;
 			break;
 		case C('U'):  // Kill line.
-			while(input.e != input.w &&
-			      input.buf[(input.e-1) % INPUT_BUF] != '\n'){
-				input.e--;
-				consputc(selectedTerminal,BACKSPACE);
+			while(input[terminal].e != input[terminal].w &&
+			      input[terminal].buf[(input[terminal].e-1) % INPUT_BUF] != '\n'){
+				input[terminal].e--;
+				consputc(terminal,BACKSPACE);
 			}
 			break;
 		case C('H'): case '\x7f':  // Backspace
-			if(input.e != input.w){
-				input.e--;
-				consputc(selectedTerminal,BACKSPACE);
+			if(input[terminal].e != input[terminal].w){
+				input[terminal].e--;
+				consputc(terminal,BACKSPACE);
 			}
 			break;
 		case A('1'):
@@ -282,19 +282,19 @@ consoleintr(int (*getc)(void))
 			setScreen(5);
 			break;
 		default:
-			if(c != 0 && input.e-input.r < INPUT_BUF){
+			if(c != 0 && input[terminal].e-input[terminal].r < INPUT_BUF){
 				c = (c == '\r') ? '\n' : c;
-				input.buf[input.e++ % INPUT_BUF] = c;
-				consputc(selectedTerminal,c);
-				if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
-					input.w = input.e;
-					wakeup(&input.r);
+				input[terminal].buf[input[terminal].e++ % INPUT_BUF] = c;
+				consputc(terminal,c);
+				if(c == '\n' || c == C('D') || input[terminal].e == input[terminal].r+INPUT_BUF){
+					input[terminal].w = input[terminal].e;
+					wakeup(&input[terminal].r);
 				}
 			}
 			break;
 		}
 	}
-	release(&cons.lock);
+	release(&cons[terminal].lock);
 	if(doprocdump) {
 		procdump();  // now call procdump() wo. cons.lock held
 	}
@@ -306,28 +306,29 @@ consoleread(struct inode *ip, char *dst, int n)
 	uint target;
 	int c;
 
+	int terminal = ip->minor -1;
 	// XXX: Ukloniti ovaj deo.
-	if (ip->minor != selectedTerminal + 1)
-		return 0;
+	//if (terminal != selectedTerminal)
+	//	return 0;
 
 	iunlock(ip);
 	target = n;
-	acquire(&cons.lock);
+	acquire(&cons[terminal].lock);
 	while(n > 0){
-		while(input.r == input.w){
+		while(input[terminal].r == input[terminal].w){
 			if(myproc() != 0 && myproc()->killed){
-				release(&cons.lock);
+				release(&cons[terminal].lock);
 				ilock(ip);
 				return -1;
 			}
-			sleep(&input.r, &cons.lock);
+			sleep(&input[terminal].r, &cons[terminal].lock);
 		}
-		c = input.buf[input.r++ % INPUT_BUF];
+		c = input[terminal].buf[input[terminal].r++ % INPUT_BUF];
 		if(c == C('D')){  // EOF
 			if(n < target){
 				// Save ^D for next time, to make sure
 				// caller gets a 0-byte result.
-				input.r--;
+				input[terminal].r--;
 			}
 			break;
 		}
@@ -336,7 +337,7 @@ consoleread(struct inode *ip, char *dst, int n)
 		if(c == '\n')
 			break;
 	}
-	release(&cons.lock);
+	release(&cons[terminal].lock);
 	ilock(ip);
 
 	return target - n;
@@ -348,15 +349,14 @@ consolewrite(struct inode *ip, char *buf, int n)
 	int i;
 
 	// XXX: Ukloniti ovaj deo.
-
+	int terminal = ip->minor-1;
 
 	iunlock(ip);
-	acquire(&cons.lock);
-	int terminal = ip->minor-1;
+	acquire(&cons[terminal].lock);
 	for(i = 0; i < n; i++)
 		consputc(terminal,buf[i] & 0xff);
 	
-	release(&cons.lock);
+	release(&cons[terminal].lock);
 	ilock(ip);
 
 	return n;
@@ -365,14 +365,16 @@ consolewrite(struct inode *ip, char *buf, int n)
 void
 consoleinit(void)
 {
-	initlock(&cons.lock, "console");
+	int terminal = selectedTerminal;
+	initlock(&cons[terminal].lock, "console");
 
 	devsw[CONSOLE].write = consolewrite;
 	devsw[CONSOLE].read = consoleread;
-	cons.locking = 1;
+	cons[terminal].locking = 1;
 	memset(crt,0, ScreenSize);
 	for (int i = 0; i < Terminals; i++)
 	{
+		cons[i].locking = 1;
 		positions[i] = 0;
 		memset(terminals[i], 0, ScreenSize);
 	}
