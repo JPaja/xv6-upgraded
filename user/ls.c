@@ -40,10 +40,15 @@ ls(char *path)
 		close(fd);
 		return;
 	}
-
+	
 	switch(st.type){
+
 	case T_FILE:
 		printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
+		break;
+
+	case T_DEV: //u slucaju ako se uradi ls na T_Dev direktno
+		printf("\033[47;36m%s\033[0m %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
 		break;
 
 	case T_DIR:
@@ -63,7 +68,10 @@ ls(char *path)
 				printf("ls: cannot stat %s\n", buf);
 				continue;
 			}
-			printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+			if(st.type == T_DEV)
+				printf("\033[47;36m%s\033[0m %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+			else 
+				printf("\033[41m%s\033[0m %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
 		}
 		break;
 	}
