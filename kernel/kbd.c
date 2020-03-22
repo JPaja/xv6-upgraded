@@ -7,8 +7,9 @@ int
 kbdgetc(void)
 {
 	static uint shift;
-	static uchar *charcode[4] = {
-		normalmap, shiftmap, ctlmap, ctlmap
+	static uchar *charcode[8] = {
+		normalmap, shiftmap, ctlmap, ctlmap,
+		altmap, altmap, altmap, altmap
 	};
 	uint st, data, c;
 
@@ -33,19 +34,13 @@ kbdgetc(void)
 
 	shift |= shiftcode[data];
 	shift ^= togglecode[data];
-	c = charcode[shift & (CTL | SHIFT)][data];
+	c = charcode[shift & (CTL | SHIFT | ALT)][data];
 	if(shift & CAPSLOCK){
 		if('a' <= c && c <= 'z')
 			c += 'A' - 'a';
 		else if('A' <= c && c <= 'Z')
 			c += 'a' - 'A';
 	}
-    if(shift & ALT)
-	{
-		if(c >= '1' && c <= '6')
-			c = 0x110 + c - '1';
-	}
-
 	return c;
 }
 

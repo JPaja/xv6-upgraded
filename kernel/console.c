@@ -46,12 +46,13 @@ void setScreen(int terminal)
 	if(selectedTerminal == terminal)
 		return;
 	selectedTerminal = terminal;
-	int pos = positions[terminal];
-	memmove(crt,terminals[terminal], ScreenSize);
-	outb(CRTPORT, 14);
+	int pos = positions[terminal];  //sacuvana pozicija za terminal
+	memmove(crt,terminals[terminal], ScreenSize); //Iz terminalnog buffera prebacim u grafiku
+	outb(CRTPORT, 14);  //namestim terminal
 	outb(CRTPORT+1, pos>>8);
 	outb(CRTPORT, 15);
 	outb(CRTPORT+1, pos);
+
 }
 
 static struct {
@@ -235,6 +236,7 @@ consputc(int terminal,int c)
 
 
 #define C(x)  ((x)-'@')  // Control-x
+#define A(x)  ((x)+'z')  // alt-x // AB-B0
 
 void
 consoleintr(int (*getc)(void))
@@ -261,22 +263,22 @@ consoleintr(int (*getc)(void))
 				consputc(selectedTerminal,BACKSPACE);
 			}
 			break;
-		case SWITCH + 0:
+		case A('1'):
 			setScreen(0);
 			break;
-		case SWITCH + 1:
+		case A('2'):
 			setScreen(1);
 			break;
-		case SWITCH + 2:
+		case A('3'):
 			setScreen(2);
 			break;
-		case SWITCH + 3:
+		case A('4'):
 			setScreen(3);
 			break;
-		case SWITCH + 4:
+		case A('5'):
 			setScreen(4);
 			break;
-		case SWITCH + 5:
+		case A('6'):
 			setScreen(5);
 			break;
 		default:
@@ -313,7 +315,7 @@ consoleread(struct inode *ip, char *dst, int n)
 	acquire(&cons.lock);
 	while(n > 0){
 		while(input.r == input.w){
-			if(myproc()->killed){
+			if(myproc() != 0 && myproc()->killed){
 				release(&cons.lock);
 				ilock(ip);
 				return -1;
