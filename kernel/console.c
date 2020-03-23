@@ -19,11 +19,21 @@ static void consputc(int,int);
 
 #define ScreenSize (47*80)
 #define Terminals 6
+#define Def_Col 0x07
+#define Ansi_Escape '\033'
 
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 static ushort terminals[Terminals][ScreenSize];
 static int positions[Terminals];
 static int selectedTerminal = 0;
+static enum
+{
+	Normal,
+	Ansi_Start,
+	Ansi,
+}printTypes[Terminals];
+static char colors[Terminals];
+static int ansiNumbers[Terminals];
 
 
 static int panicked = 0;
@@ -159,49 +169,119 @@ panic(char *s)
 }
 
 
+static void fixTerminal(int terminal, int * pos)
+{
+		if(*pos < 0 || *pos > 25*80)
+			panic("pos under/overflow");
 
+		if((*pos/80) >= 24){  // Scroll up.
+			memmove(terminals[terminal], terminals[terminal]+80, sizeof(terminals[terminal][0])*23*80);
+			if (terminal == selectedTerminal)
+				memmove(crt, crt+80, sizeof(crt[0])*23*80);
+			*pos -= 80;
+			memset(terminals[terminal]+*pos, 0, sizeof(terminals[terminal][0])*(24*80 - *pos));
+			if (terminal == selectedTerminal)
+				memset(crt+*pos, 0, sizeof(crt[0])*(24*80 - *pos));
+		}
+}
+
+static void setColor(int terminal,int n)
+{
+	if(n == 0)
+		colors[terminal] = Def_Col;
+	else if(n >= 30 && n <= 37)
+	{
+		colors[terminal] &= 0xF0;
+		colors[terminal] |= (n-30);
+	}
+	else if(n == 39)
+	{
+		colors[terminal] &= 0xF0;
+		colors[terminal] |= Def_Col & 0xF;
+	}
+	else if(n >= 40 && n <= 47)
+	{
+		colors[terminal] &= 0x0F;
+		colors[terminal] |= (n-40) << 4;
+	}
+	else if(n == 49)
+	{
+		colors[terminal] &= 0x0F;
+		colors[terminal] |= Def_Col & 0xF0;
+	}
+	else
+		panic("Unknown ansi code");
+}
 
 static void
 cgaputc(int terminal,int c)
 {
-
-	//struct inode* node = myproc()->cwd;// myproc();//myproc()->cwd; 
-	//int terminal = 0;//node->minor -1;
 	int pos = positions[terminal];
+	int color = colors[terminal] << 8;
 	
-	// Cursor position: col + 80*row.
-	//outb(CRTPORT, 14);
-	//pos = inb(CRTPORT+1) << 8;
-	//outb(CRTPORT, 15);
-	//pos |= inb(CRTPORT+1);
-
-	if(c == '\n')
-		pos += 80 - pos%80;
-	else if(c == BACKSPACE){
-		if(pos > 0) --pos;
-	} else
+	if(printTypes[terminal] == Normal && c == Ansi_Escape)
+	{
+		printTypes[terminal] = Ansi_Start;
+		return;
+	}
+	else if(printTypes[terminal] == Ansi_Start && c == '[')
+	{
+		printTypes[terminal] = Ansi;
+		return;
+	}
+	else if(printTypes[terminal] == Ansi_Start && c != '[')
 	{
 		if (terminal == selectedTerminal)
-			crt[pos] =  (c &0xff) | 0x0700;
-		terminals[terminal][pos++] =  (c &0xff) | 0x0700;//(c&0xff) | 0x0700;  // black on white
-	}
-	if(pos < 0 || pos > 25*80)
-		panic("pos under/overflow");
-
-	if((pos/80) >= 24){  // Scroll up.
-		memmove(terminals[terminal], terminals[terminal]+80, sizeof(terminals[terminal][0])*23*80);
+			crt[pos] =  (c & 0xff) | color;
+		terminals[terminal][pos++] =  (Ansi_Escape & 0xff) |color;
+		fixTerminal(terminal,&pos);
 		if (terminal == selectedTerminal)
-			memmove(crt, crt+80, sizeof(crt[0])*23*80);
-		pos -= 80;
-		memset(terminals[terminal]+pos, 0, sizeof(terminals[terminal][0])*(24*80 - pos));
+			crt[pos] =  (c & 0xff) | color;
+		terminals[terminal][pos++] =  (c & 0xff) |	color;
+	}
+	else if(printTypes[terminal] == Ansi && c >= '0' && c <= '9')
+	{
+		ansiNumbers[terminal] *= 10;
+		ansiNumbers[terminal] += c - '0';
+		return;
+	}
+	else if(printTypes[terminal] == Ansi && c == ';')
+	{
+		setColor(terminal,ansiNumbers[terminal]);
+		ansiNumbers[terminal] = 0;
+		return;
+	}
+	else if(printTypes[terminal] == Ansi && c == 'm')
+	{
+		setColor(terminal,ansiNumbers[terminal]);
+		ansiNumbers[terminal] = 0;
+		printTypes[terminal] = Normal;
+		return;
+	}
+	else if(printTypes[terminal] == Ansi)
+	{
+		panic("Invalid ansi code");
+	}
+	else if(c == '\n')
+	{
+		pos += 80 - pos%80;
+	}
+	else if(c == BACKSPACE){
+		if(pos > 0) --pos;
+	} 
+	else
+	{
 		if (terminal == selectedTerminal)
-			memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
+			crt[pos] =  (c &0xff) | color;
+		terminals[terminal][pos++] =  (c &0xff) | color;
 	}
 
+	fixTerminal(terminal,&pos);
 
-	terminals[terminal][pos] = ' ' | 0x0700;
+
+	terminals[terminal][pos] = ' ' | Def_Col;
 	if (terminal == selectedTerminal)
-		crt[pos] = ' ' | 0x0700;
+		crt[pos] = ' ' | Def_Col;
 
 	positions[terminal] = pos;
 	if (terminal == selectedTerminal)
@@ -374,6 +454,8 @@ consoleinit(void)
 	memset(crt,0, ScreenSize);
 	for (int i = 0; i < Terminals; i++)
 	{
+		printTypes[i] = Normal;
+		colors[i] = Def_Col;
 		cons[i].locking = 1;
 		positions[i] = 0;
 		memset(terminals[i], 0, ScreenSize);
