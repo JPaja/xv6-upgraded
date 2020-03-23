@@ -185,6 +185,22 @@ static void fixTerminal(int terminal, int * pos)
 		}
 }
 
+static char toXColor(int ansiColor)
+{
+	switch (ansiColor)
+	{
+		case 1:
+			return 4;
+		case 3:
+			return 6;
+		case 4:
+			return 1;
+		case 6:
+			return 3;
+	}
+	return ansiColor;
+}
+
 static void setColor(int terminal,int n)
 {
 	if(n == 0)
@@ -192,7 +208,7 @@ static void setColor(int terminal,int n)
 	else if(n >= 30 && n <= 37)
 	{
 		colors[terminal] &= 0xF0;
-		colors[terminal] |= (n-30);
+		colors[terminal] |= toXColor((n-30));
 	}
 	else if(n == 39)
 	{
@@ -202,7 +218,7 @@ static void setColor(int terminal,int n)
 	else if(n >= 40 && n <= 47)
 	{
 		colors[terminal] &= 0x0F;
-		colors[terminal] |= (n-40) << 4;
+		colors[terminal] |= toXColor((n-40)) << 4;
 	}
 	else if(n == 49)
 	{
