@@ -68,10 +68,17 @@ ls(char *path)
 				printf("ls: cannot stat %s\n", buf);
 				continue;
 			}
-			if(st.type == T_DEV)
+			switch(st.type){
+			case T_FILE:
+				printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+				break;
+			case T_DEV:
 				printf("\033[37;43m%s\033[0m %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
-			else 
+				break;
+			case T_DIR:
 				printf("\033[34m%s\033[0m %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+				break;
+			}
 		}
 		break;
 	}
