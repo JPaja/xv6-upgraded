@@ -30,8 +30,6 @@
 
 // C('A') == Control-A
 #define C(x) (x - '@')
-//A('1') == alt-1
-#define A(x)  ((x)+'z')  // alt-x
 
 static uchar shiftcode[256] =
 {
@@ -110,10 +108,5 @@ static uchar ctlmap[256] =
 	[0xCB] KEY_LF,    [0xCD] KEY_RT,
 	[0x97] KEY_HOME,  [0xCF] KEY_END,
 	[0xD2] KEY_INS,   [0xD3] KEY_DEL
-};
-
-static uchar altmap[256] =
-{
-	NO,   NO, A('1'),  A('2'),  A('3'),  A('4'),  A('5'),  A('6')  // 0x00
 };
 
