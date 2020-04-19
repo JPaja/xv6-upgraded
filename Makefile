@@ -2,6 +2,7 @@ B=bootloader
 K=kernel
 U=user
 T=tools
+D=$K/dev
 
 HDRS = \
 	$K/asm.h\
@@ -25,9 +26,13 @@ HDRS = \
 	$K/traps.h\
 	$K/types.h\
 	$K/x86.h\
+	$K/dev.h\
 	$U/user.h\
 
+
 OBJS = \
+	$D/null.o\
+	$D/zero.o\
 	$K/bio.o\
 	$K/console.o\
 	$K/exec.o\
@@ -233,7 +238,6 @@ QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,
 
 qemu: fs.img xv6.img
 	$(QEMU) $(QEMUOPTS)
-
 
 qemu-win: fs.img xv6.img
 	export DISPLAY=:0

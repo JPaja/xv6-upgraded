@@ -10,6 +10,14 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+//dev/zero.c
+void            devZeroInit(void);
+
+//dev/null.c
+void            devNullInit(void);
+
+
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);

@@ -4,6 +4,7 @@
 #include "kernel/stat.h"
 #include "user.h"
 #include "kernel/fcntl.h"
+#include "kernel/dev.h"
 
 char *argv[] = { "sh", 0 };
 
@@ -23,6 +24,10 @@ main(void)
 	}
 	dup(0);  // stdout
 	dup(0);  // stderr
+
+
+	mknod("/dev/null", DEVNULL, 1);
+	mknod("/dev/zero", DEVZERO, 1);
 
 	for(;;){
 		printf("init: starting sh\n");
