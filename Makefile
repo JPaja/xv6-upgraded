@@ -56,6 +56,7 @@ OBJS = \
 	$K/syscall.o\
 	$K/sysfile.o\
 	$K/sysproc.o\
+	$K/sysconsole.o\
 	$K/trapasm.o\
 	$K/trap.o\
 	$K/uart.o\
