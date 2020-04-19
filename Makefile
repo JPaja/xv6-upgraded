@@ -208,7 +208,6 @@ UPROGS=\
 	$U/_kill\
 	$U/_ln\
 	$U/_ls\
-	$U/_dd\
 	$U/_mkdir\
 	$U/_rm\
 	$U/_sh\
@@ -216,6 +215,8 @@ UPROGS=\
 	$U/_usertests\
 	$U/_wc\
 	$U/_zombie\
+	$U/_dd\
+	$U/_test\
 
 fs.img: $T/mkfs README $(UPROGS)
 	$T/mkfs fs.img README $(UPROGS)
