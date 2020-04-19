@@ -155,3 +155,21 @@ filewrite(struct file *f, char *addr, int n)
 	panic("filewrite");
 }
 
+int fileseek(struct file *f,int offset, int whence)
+{
+	switch (whence)
+	{
+		case SEEK_SET:
+			f->off = offset;
+			break;
+		case SEEK_CUR:
+			f->off += offset;
+			break;
+		case SEEK_END:
+			f->off = f->ip->size + offset;
+			break;
+		default:
+			break;
+	}
+
+}
