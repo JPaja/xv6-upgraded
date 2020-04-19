@@ -24,10 +24,10 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
-int lseek(void);
+int lseek(int fd,int offset, int whence);
 int clrscr(void);
-int getcp(void);
-int setcp(void);
+int getcp(int* x, int* y);
+int setcp(int* x, int* y);
 
 // ulib.c
 int stat(const char*, struct stat*);
