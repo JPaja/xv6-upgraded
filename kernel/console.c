@@ -23,6 +23,34 @@ static struct {
 	struct spinlock lock;
 	int locking;
 } cons;
+#define CRTPORT 0x3d4
+static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
+
+void setCursorPosition(int x, int y)
+{
+	int pos = y * 80 + x;
+	outb(CRTPORT, 14);
+	outb(CRTPORT + 1, pos >>  8);
+	outb(CRTPORT, 15);
+	outb(CRTPORT + 1, pos);
+}
+
+void getCursorPosition(int* x, int* y)
+{
+	int pos;
+	outb(CRTPORT, 14);
+	pos = inb(CRTPORT+1) << 8;
+	outb(CRTPORT, 15);
+	pos |= inb(CRTPORT+1);
+	*x = pos % 80;
+	*y = pos / 80;
+}
+
+void clearScreen()
+{
+	memset(crt, 0, sizeof(crt[0])*(47*80));
+	setCursorPosition(0,0);
+}
 
 static void
 printint(int xx, int base, int sign)
@@ -123,8 +151,7 @@ panic(char *s)
 }
 
 #define BACKSPACE 0x100
-#define CRTPORT 0x3d4
-static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
+
 
 static void
 cgaputc(int c)

@@ -29,6 +29,9 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+void            clearScreen(void);
+void            setCursorPosition(int,int);
+void            getCursorPosition(int*,int*);
 
 // exec.c
 int             exec(char*, char**);

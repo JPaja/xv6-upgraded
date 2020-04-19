@@ -10,16 +10,18 @@
 int
 sys_clrscr(void)
 {
+	clearScreen();
 	return 0; 
 }
 
 int
 sys_getcp(void)
 {
-	int x;
-	int y;
+	int* x;
+	int* y;
 	if(argint(0, &x) < 0 || argint(1, &y) < 0)
 		return -1;
+	getCursorPosition(x,y);
 	return 0; 
 }
 
@@ -30,6 +32,7 @@ sys_setcp(void)
 	int y;
 	if(argint(0, &x) < 0 || argint(1, &y) < 0)
 		return -1;
+	setCursorPosition(x,y);
 	return 0; 
 }
 
