@@ -20,6 +20,7 @@ void
 fileinit(void)
 {
 	initlock(&ftable.lock, "ftable");
+	devInit();		 // inits all custom devs
 }
 
 // Allocate a file structure.

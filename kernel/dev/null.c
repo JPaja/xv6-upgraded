@@ -16,7 +16,7 @@
 int
 nullRead(struct inode *ip, char *dst, int n)
 {
-    return 0;
+    return n; // mora da bude n inace panikuje
 }
 
 int

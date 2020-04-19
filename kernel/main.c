@@ -25,7 +25,6 @@ main(void)
 	picinit();       // disable pic
 	ioapicinit();    // another interrupt controller
 	consoleinit();   // console hardware
-	devInit();		 // inits all custom devs
 	uartinit();      // serial port
 	pinit();         // process table
 	tvinit();        // trap vectors

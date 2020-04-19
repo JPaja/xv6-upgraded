@@ -18,6 +18,9 @@ main(void)
 		exit();
 	}
 
+	mknod("/dev/null", DEVNULL,	1);
+	mknod("/dev/zero", DEVZERO, 1);
+	
 	if(open("/dev/console", O_RDWR) < 0){
 		mknod("/dev/console", 1, 1);
 		open("/dev/console", O_RDWR);
@@ -26,8 +29,6 @@ main(void)
 	dup(0);  // stderr
 
 
-	mknod("/dev/null", DEVNULL, 1);
-	mknod("/dev/zero", DEVZERO, 1);
 
 	for(;;){
 		printf("init: starting sh\n");
