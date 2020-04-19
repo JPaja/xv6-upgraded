@@ -3,83 +3,68 @@
 #include "user.h"
 #include "kernel/fs.h"
 
-char*
-fmtname(char *path)
+
+int
+startsWith(const char *q,const char *p)
 {
-	static char buf[DIRSIZ+1];
-	char *p;
-
-	// Find first character after last slash.
-	for(p=path+strlen(path); p >= path && *p != '/'; p--)
-		;
-	p++;
-
-	// Return blank-padded name.
-	if(strlen(p) >= DIRSIZ)
-		return p;
-	memmove(buf, p, strlen(p));
-	memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
-	return buf;
+	while (*p)
+	{
+		if(*p != *q)
+			return 0;
+		p++;
+		q++;
+	}
+	return 1;
 }
 
-void
-ls(char *path)
+void dd(const char* inf, const char* of, int bs, int count, int skip, int seek)
 {
-	char buf[512], *p;
-	int fd;
-	struct dirent de;
-	struct stat st;
-
-	if((fd = open(path, 0)) < 0){
-		fprintf(2, "ls: cannot open %s\n", path);
-		return;
-	}
-
-	if(fstat(fd, &st) < 0){
-		fprintf(2, "ls: cannot stat %s\n", path);
-		close(fd);
-		return;
-	}
-
-	switch(st.type){
-	case T_FILE:
-		printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
-		break;
-
-	case T_DIR:
-		if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
-			printf("ls: path too long\n");
-			break;
-		}
-		strcpy(buf, path);
-		p = buf+strlen(buf);
-		*p++ = '/';
-		while(read(fd, &de, sizeof(de)) == sizeof(de)){
-			if(de.inum == 0)
-				continue;
-			memmove(p, de.name, DIRSIZ);
-			p[DIRSIZ] = 0;
-			if(stat(buf, &st) < 0){
-				printf("ls: cannot stat %s\n", buf);
-				continue;
-			}
-			printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
-		}
-		break;
-	}
-	close(fd);
+	printf("if=%s\nof=%s\nbs=%d\ncount=%d\nskip=%d\nseek=%d\n",inf,of,bs,count,skip,seek);
 }
+
 
 int
 main(int argc, char *argv[])
 {
+	char buffer[512];
 	int i;
 
-	if(argc < 2){
-		ls(".");
-		exit();
-	}
+	//args
+	char inf[512]  = "/dev/console";
+	char of[512] = "/dev/console";
+	int bs = 512;
+	int count = -1;
+	int skip = 0;
+	int seek = 0;
 	for(i=1; i<argc; i++)
-		ls(argv[i]);
+	{
+		if(startsWith(argv[i],"if="))
+			strcpy(inf, argv[i] + strlen("if="));
+		else if(startsWith(argv[i],"of="))
+			strcpy(of, argv[i] + strlen("of="));
+		else if(startsWith(argv[i],"bs="))
+		{
+			strcpy(buffer, argv[i] + strlen("bs="));
+			bs = atoi(buffer);
+		}
+		else if(startsWith(argv[i],"count=")){
+			strcpy(buffer, argv[i] + strlen("count="));
+			count = atoi(buffer);
+		}
+		else if(startsWith(argv[i],"skip=")){
+			strcpy(buffer, argv[i] + strlen("skip="));
+			skip = atoi(buffer);
+		}
+		else if(startsWith(argv[i],"seek=")){
+			strcpy(buffer, argv[i] + strlen("seek="));
+			seek = atoi(buffer);
+		}
+		else{
+			printf("Error failed to parse argument: %s\n",argv[i]);
+			return 0;
+		}
+	}
+	dd(inf,of,bs,count,skip,seek);
+
 	exit();
 }
