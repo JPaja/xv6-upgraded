@@ -9,6 +9,7 @@
 #include "spinlock.h"
 #include "sleeplock.h"
 #include "file.h"
+#include "stat.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -121,6 +122,7 @@ filewrite(struct file *f, char *addr, int n)
 
 	if(f->writable == 0)
 		return -1;
+
 	if(f->type == FD_PIPE)
 		return pipewrite(f->pipe, addr, n);
 	if(f->type == FD_INODE){
@@ -130,6 +132,19 @@ filewrite(struct file *f, char *addr, int n)
 		// and 2 blocks of slop for non-aligned writes.
 		// this really belongs lower down, since writei()
 		// might be writing a device like the console.
+		
+		if(f->off > f->ip->size && f->ip->type == T_FILE)
+		{
+			uint oldOff = f->off;
+			uint newSize = oldOff - f->ip->size;
+			char buffer[newSize];
+			memset(buffer,0, newSize);
+			f->off = f->ip->size;
+			filewrite(f,buffer,newSize);
+			f->off = oldOff;
+			f->ip->size =oldOff;
+		}
+
 		int max = ((MAXOPBLOCKS-1-1-2) / 2) * 512;
 		int i = 0;
 		while(i < n){
