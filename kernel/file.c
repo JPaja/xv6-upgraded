@@ -133,7 +133,7 @@ filewrite(struct file *f, char *addr, int n)
 		// this really belongs lower down, since writei()
 		// might be writing a device like the console.
 		
-		if(f->off > f->ip->size && f->ip->type == T_FILE)
+		if(f->ip->type == T_FILE && f->off > f->ip->size)
 		{
 			uint oldOff = f->off;
 			uint newSize = oldOff - f->ip->size;
