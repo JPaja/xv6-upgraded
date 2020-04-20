@@ -20,6 +20,9 @@ main(void)
 
 	mknod("/dev/null", DEVNULL,	1);
 	mknod("/dev/zero", DEVZERO, 1);
+	mknod("/dev/kmesg", DEVKMESG,	1);
+	mknod("/dev/random", DEVRANDOM, 1);
+	mknod("/dev/disk", DEVDISK,	1);
 	
 	if(open("/dev/console", O_RDWR) < 0){
 		mknod("/dev/console", 1, 1);

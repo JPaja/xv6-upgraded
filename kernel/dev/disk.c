@@ -14,21 +14,21 @@
 
 
 int
-nullRead(struct inode *ip, char *dst, int n)
+diskRead(struct inode *ip, char *dst, int n)
 {
     return n; // mora da bude n inace panikuje
 }
 
 int
-nullWrite(struct inode *ip, char *buf, int n)
+diskWrite(struct inode *ip, char *buf, int n)
 {
 	return n;
 }
 
 void
-devNullInit(void)
+devDiskInit(void)
 {
-	devsw[DEVNULL].write = nullWrite;
-	devsw[DEVNULL].read = nullRead;
+	devsw[DEVDISK].write = diskWrite;
+	devsw[DEVDISK].read = diskRead;
 }
 

@@ -41,6 +41,9 @@ void devInit()
 {
 	devNullInit();
 	devZeroInit();
+	devKmesgInit();
+	devRandomInit();
+	devDiskInit();
 }
 
 // Other CPUs jump here from entryother.S.

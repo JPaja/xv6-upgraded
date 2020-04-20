@@ -14,21 +14,21 @@
 
 
 int
-nullRead(struct inode *ip, char *dst, int n)
+kmesgRead(struct inode *ip, char *dst, int n)
 {
     return n; // mora da bude n inace panikuje
 }
 
 int
-nullWrite(struct inode *ip, char *buf, int n)
+kmesgWrite(struct inode *ip, char *buf, int n)
 {
 	return n;
 }
 
 void
-devNullInit(void)
+devKmesgInit(void)
 {
-	devsw[DEVNULL].write = nullWrite;
-	devsw[DEVNULL].read = nullRead;
+	devsw[DEVKMESG].write = kmesgWrite;
+	devsw[DEVKMESG].read = kmesgRead;
 }
 

@@ -33,6 +33,9 @@ HDRS = \
 OBJS = \
 	$D/null.o\
 	$D/zero.o\
+	$D/random.o\
+	$D/kmesg.o\
+	$D/disk.o\
 	$K/bio.o\
 	$K/console.o\
 	$K/exec.o\

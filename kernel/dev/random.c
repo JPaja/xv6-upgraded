@@ -14,21 +14,21 @@
 
 
 int
-nullRead(struct inode *ip, char *dst, int n)
+randomRead(struct inode *ip, char *dst, int n)
 {
     return n; // mora da bude n inace panikuje
 }
 
 int
-nullWrite(struct inode *ip, char *buf, int n)
+randomWrite(struct inode *ip, char *buf, int n)
 {
 	return n;
 }
 
 void
-devNullInit(void)
+devRandomInit(void)
 {
-	devsw[DEVNULL].write = nullWrite;
-	devsw[DEVNULL].read = nullRead;
+	devsw[DEVRANDOM].write = randomWrite;
+	devsw[DEVRANDOM].read = randomRead;
 }
 
