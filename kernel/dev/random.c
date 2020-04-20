@@ -15,7 +15,7 @@
 char seed = 0xDA;
 
 int
-randomRead(struct inode *ip, char *dst, int n)
+randomRead(struct inode* ip, char *dst, int n)
 {
 	for(int i = 0 ; i < n; i++)
 	{
@@ -35,7 +35,7 @@ randomWrite(struct inode *ip, char *buf, int n)
 //https://stackoverflow.com/a/3062783
 void updateRandomSeed()
 {
-	seed = (1103515245  * seed + 12345) % 255;
+	seed = (1103515245  * seed + (12345 & ticks)) % 255;
 }
 
 void

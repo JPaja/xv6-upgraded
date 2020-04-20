@@ -75,7 +75,7 @@ printint(int xx, int base, int sign)
 
 	while(--i >= 0){
 		consputc(buf[i]);
-		putcKMSEG(buf[i]);
+		putcKMESG(buf[i]);
 
 	}
 }
@@ -99,7 +99,7 @@ cprintf(char *fmt, ...)
 	for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
 		if(c != '%'){
 			consputc(c);
-			putcKMSEG(c);
+			putcKMESG(c);
 			continue;
 		}
 		c = fmt[++i] & 0xff;
@@ -118,19 +118,19 @@ cprintf(char *fmt, ...)
 				s = "(null)";
 			for(; *s; s++){
 				consputc(*s);
-				putcKMSEG(*s);
+				putcKMESG(*s);
 			}
 			break;
 		case '%':
 			consputc('%');
-			putcKMSEG('%');
+			putcKMESG('%');
 			break;
 		default:
 			// Print unknown % sequence to draw attention.
 			consputc('%');
 			consputc(c);
-			putcKMSEG('%');
-			putcKMSEG(c);
+			putcKMESG('%');
+			putcKMESG(c);
 			break;
 		}
 	}

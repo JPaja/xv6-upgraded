@@ -31,7 +31,7 @@ void setKMSEGPos(int position)
 	pos = position;
 }
 
-void putcKMSEG(char c)
+void putcKMESG(char c)
 {
 	if(len == SIZE)
 	{

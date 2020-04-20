@@ -22,6 +22,25 @@ void TestConsoleSystemCalls()
 
 }
 
+void TestCler()
+{
+	clrscr();
+	printf("Ociscen prozor\n");
+}
+void TestPos()
+{
+	int x;
+	int y;
+	getcp(&x,&y);
+	printf("Trenutna pozicija kursora %d, %d\n",x,y);
+
+	setcp(0,10);
+	printf("Kursor y setovan na 10 a x na 0\n");
+	setcp(15,12);
+	printf("Kursor y setovan na 12 a x na 15\n");
+}
+
+
 int checkBytes(char * data, int check, int size)
 {
 	for(int i = 0; i < size; i++)
@@ -75,11 +94,59 @@ void TestZeroDevice()
 		printf("/dev/zero write test succeeded\n");
 	
 }
+
+
+void TestKMESG()
+{
+	int fd = open("/dev/kmesg",O_RDONLY);
+	printf("Testiranje: /dev/kmesg fd: %d \n",fd);
+	int size = 20;
+	char buffer[20];
+
+	memset(buffer,1, size);
+	int r = read(fd,buffer,size);
+
+	printf("KMESG prvih 15 karaktera: (ocekivano da sadrzi \"Sistem je pokrenut\" ako je prvi put izvrseno)\n",r);
+	for(int i = 0; i < size;i++)
+		if(buffer[i] != '0' && buffer[i] != '\n')
+			printf("%c",buffer[i]);
+	read(fd,buffer,size);
+	printf("\nKMESG sledecih 15 karaktera: (ocekivano da sadrzi \"CPU starting\" ako je prvi put izvrseno)\n",r);
+	for(int i = 0; i < size;i++)
+		if(buffer[i] != '0' && buffer[i] != '\n')
+			printf("%c",buffer[i]);
+	printf("\n");
+}
+
+void TestRANDOm()
+{
+	int fd = open("/dev/random",O_RDONLY);
+	printf("Testiranje: /dev/random fd: %d \n",fd);
+	int size = 20;
+	char buffer[20];
+
+	memset(buffer,1, size);
+	int r = read(fd,buffer,size);
+
+	printf("RANDOM prvih 20 brojeva:\n",r);
+	for(int i = 0; i < size;i++)
+		printf("%d ",buffer[i]);
+		r = read(fd,buffer,size);
+	printf("\n");
+	printf("RANDOM sledecih 20 brojeva:\n",r);
+	for(int i = 0; i < size;i++)
+		printf("%d ",buffer[i]);
+	printf("\n");
+	
+}
+
 void TestDevices()
 {
 	TestZeroDevice();
 	TestNullDevice();
-	
+	TestKMESG();
+	TestRANDOm();
+
 }
 
 
@@ -93,8 +160,20 @@ main(int argc, char *argv[])
 	{
 		if(!strcmp("console", argv[i]))
 			TestConsoleSystemCalls();
+		else if(!strcmp("clear", argv[i]))
+			TestCler();
+		else if(!strcmp("pos", argv[i]))
+			TestPos();
 		else if(!strcmp("dev", argv[i]))
 			TestDevices();
+		else if(!strcmp("zero", argv[i]))
+			TestZeroDevice();
+		else if(!strcmp("null", argv[i]))
+			TestNullDevice();
+		else if(!strcmp("kmesg", argv[i]))
+			TestKMESG();
+		else if(!strcmp("random", argv[i]))
+			TestRANDOm();	
 	}
 
 	printf("Testing completed\n");
