@@ -6,7 +6,7 @@
 int
 kbdgetc(void)
 {
-	updateRandomSeed();
+
 	static uint shift;
 	static uchar *charcode[4] = {
 		normalmap, shiftmap, ctlmap, ctlmap
@@ -20,22 +20,16 @@ kbdgetc(void)
 
 	if(data == 0xE0){
 		shift |= E0ESC;
-		updateRandomSeed();
 		return 0;
 	} else if(data & 0x80){
 		// Key released
 		data = (shift & E0ESC ? data : data & 0x7F);
 		shift &= ~(shiftcode[data] | E0ESC);
-		updateRandomSeed();
-		updateRandomSeed();
 		return 0;
 	} else if(shift & E0ESC){
 		// Last character was an E0 escape; or with 0x80
 		data |= 0x80;
 		shift &= ~E0ESC;
-		updateRandomSeed();
-		updateRandomSeed();
-		updateRandomSeed();
 	}
 
 	shift |= shiftcode[data];
@@ -47,6 +41,7 @@ kbdgetc(void)
 		else if('A' <= c && c <= 'Z')
 			c += 'a' - 'A';
 	}
+	updateRandomSeed(c);
 	return c;
 }
 

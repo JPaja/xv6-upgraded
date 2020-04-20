@@ -2,7 +2,9 @@
 #include "kernel/stat.h"
 #include "user.h"
 #include "kernel/fs.h"
-
+#include "kernel/fcntl.h"
+//#include "kernel/file.h"
+#define SEEK_SET 0
 
 int
 startsWith(const char *q,const char *p)
@@ -19,7 +21,23 @@ startsWith(const char *q,const char *p)
 
 void dd(const char* inf, const char* of, int bs, int count, int skip, int seek)
 {
-	printf("if=%s\nof=%s\nbs=%d\ncount=%d\nskip=%d\nseek=%d\n",inf,of,bs,count,skip,seek);
+	char buf[bs];
+
+	int input = open(inf,O_RDONLY);
+	int output = open(of,O_CREATE | O_WRONLY);
+	lseek(input, skip * bs, SEEK_SET);
+	lseek(output, seek * bs, SEEK_SET);
+	int n;
+	for(int i = 0; ((count < 0)? 1: (i < count));i++)
+	{
+		memset(buf,0,bs);
+		n = read(input, buf, sizeof(buf));
+		if(n == 0 && count < 0)
+			break;
+		write(output,buf, bs);
+		
+	}
+	//printf("if=%s\nof=%s\nbs=%d\ncount=%d\nskip=%d\nseek=%d\n",inf,of,bs,count,skip,seek);
 }
 
 
@@ -64,6 +82,8 @@ main(int argc, char *argv[])
 			return 0;
 		}
 	}
+	if(count < 0)
+		count = -1;
 	dd(inf,of,bs,count,skip,seek);
 
 	exit();

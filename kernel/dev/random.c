@@ -12,15 +12,16 @@
 #include "kernel/x86.h"
 #include "kernel/dev.h"
 
-char seed = 0xDA;
+int seed = 0xDA;
 
 int
 randomRead(struct inode* ip, char *dst, int n)
 {
 	for(int i = 0 ; i < n; i++)
 	{
-		dst[i] = seed;
-		updateRandomSeed();
+
+		dst[i] = (char)((seed >> 10)& 0x7FFF);
+		updateRandomSeed((seed >> 18)& 0xFF);
 	}
     return n; // mora da bude n inace panikuje
 }
@@ -28,14 +29,20 @@ randomRead(struct inode* ip, char *dst, int n)
 int
 randomWrite(struct inode *ip, char *buf, int n)
 {
+	for(int i = 0; i < n; i++)
+	{
+		updateRandomSeed(buf[i]);
+	}
 	return n;
 }
 
 
-//https://stackoverflow.com/a/3062783
-void updateRandomSeed()
+//https://stackoverflow.com/a/1280765
+void updateRandomSeed(char c)
 {
-	seed = (1103515245  * seed + (12345 & ticks)) % 255;
+	int i;
+	for(i = ticks & 10;i>=0;i--)
+		seed = seed*0x343fd+0x269EC3;
 }
 
 void

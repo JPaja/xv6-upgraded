@@ -26,7 +26,7 @@ void            putcKMESG(char);
 
 //dev/random.c
 void            devRandomInit(void);
-void            updateRandomSeed(void);
+void            updateRandomSeed(char);
 
 //dev/disk.c
 void            devDiskInit(void);

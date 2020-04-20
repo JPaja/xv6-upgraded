@@ -151,6 +151,42 @@ void TestDevices()
 
 
 
+void TestDD1()
+{
+	char *args[] = { "/bin/dd" , "if=/home/README","of=/home/readme2", 0 };
+	exec("/bin/dd", args);
+	exit();
+}
+
+void TestDD2()
+{
+	char *args[] = { "/bin/dd" , "if=/home/README"
+	,"of=/home/snippet","skip=2","count=1", 0 };
+	exec("/bin/dd", args);
+	exit();
+}
+
+void TestDD3()
+{
+	char *args[] = { "/bin/dd" , "if=/dev/random"
+	,"of=/home/keyfile","bs=64","count=2", 0 };
+	exec("/bin/dd", args);
+	exit();
+}
+void TestDD4()
+{
+	char *args[] = { "/bin/dd" , "if=/dev/random"
+	,"of=/test","bs=8","count=1", "seek=7", 0 };
+	exec("/bin/dd", args);
+	exit();
+}
+void TestDD5()
+{
+	char *args[] = { "/bin/dd" , "if=/dev/random", "count=1", 0 };
+	exec("/bin/dd", args);
+	exit();
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -174,6 +210,16 @@ main(int argc, char *argv[])
 			TestKMESG();
 		else if(!strcmp("random", argv[i]))
 			TestRANDOm();	
+		else if(!strcmp("dd1", argv[i]))
+			TestDD1();	
+		else if(!strcmp("dd2", argv[i]))
+			TestDD2();	
+		else if(!strcmp("dd3", argv[i]))
+			TestDD3();	
+		else if(!strcmp("dd4", argv[i]))
+			TestDD4();	
+		else if(!strcmp("dd5", argv[i]))
+			TestDD5();	
 	}
 
 	printf("Testing completed\n");
