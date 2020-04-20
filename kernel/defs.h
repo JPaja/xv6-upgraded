@@ -30,6 +30,8 @@ void            updateRandomSeed(void);
 
 //dev/disk.c
 void            devDiskInit(void);
+void            setDiskOffset(int);
+int             getDiskOffset(void);
 
 // bio.c
 void            binit(void);
@@ -57,6 +59,7 @@ void            fileinit(void);
 int             fileread(struct file*, char*, int n);
 int             filestat(struct file*, struct stat*);
 int             filewrite(struct file*, char*, int n);
+int             fileseek(struct file*, int, int);
 
 // fs.c
 void            readsb(int dev, struct superblock *sb);

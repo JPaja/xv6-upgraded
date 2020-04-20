@@ -28,6 +28,7 @@ int getKMESGLen()
 }
 void setKMSEGPos(int position)
 {
+
 	pos = position;
 }
 
@@ -53,6 +54,9 @@ int min(int a, int b)
 int
 kmesgRead(struct inode *ip, char *dst, int n)
 {
+	if(pos >= len)
+		panic("Offset larger than length");
+
 	memset(dst,0,n);
 	int myN = len - pos;
 	if(n < myN)
