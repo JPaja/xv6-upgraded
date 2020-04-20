@@ -10,6 +10,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "stat.h"
+#include "dev.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -172,19 +173,42 @@ filewrite(struct file *f, char *addr, int n)
 
 int fileseek(struct file *f,int offset, int whence)
 {
-	switch (whence)
+	if(f->ip->type == T_FILE)
 	{
-		case SEEK_SET:
-			f->off = offset;
-			break;
-		case SEEK_CUR:
-			f->off += offset;
-			break;
-		case SEEK_END:
-			f->off = f->ip->size + offset;
-			break;
-		default:
-			break;
+		switch (whence)
+		{
+			case SEEK_SET:
+				f->off = offset;
+				break;
+			case SEEK_CUR:
+				f->off += offset;
+				break;
+			case SEEK_END:
+				f->off = f->ip->size + offset;
+				break;
+			default:
+				break;
+		}
+	}else if(f->ip->type == T_DEV && f->ip->major == DEVKMESG)
+	{
+		int pos = getKMESGPos();
+		int len = getKMESGLen();
+		switch (whence)
+		{
+			case SEEK_SET:
+				f->off = offset;
+				setKMSEGPos(offset);
+				break;
+			case SEEK_CUR:
+				f->off += offset;
+				setKMSEGPos(pos + offset);
+				break;
+			case SEEK_END:
+				setKMSEGPos(len + offset);
+				break;
+			default:
+				break;
+		}
 	}
 
 }

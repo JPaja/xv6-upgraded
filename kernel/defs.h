@@ -16,7 +16,20 @@ void            devZeroInit(void);
 //dev/null.c
 void            devNullInit(void);
 
+//dev/kmesg.c
+void            devKmesgInit(void);
+int             getKMESGPos(void);
+int             getKMESGLen(void);
+void            setKMSEGPos(int);
+void            putcKMESG(char);
 
+
+//dev/random.c
+void            devRandomInit(void);
+void            updateRandomSeed(void);
+
+//dev/disk.c
+void            devDiskInit(void);
 
 // bio.c
 void            binit(void);

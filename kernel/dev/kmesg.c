@@ -12,17 +12,63 @@
 #include "kernel/x86.h"
 #include "kernel/dev.h"
 
+#define SIZE 1024
+char buffer[1024];
+int pos = 0;
+int len = 0;
+
+
+int getKMESGPos()
+{
+	return pos;
+}
+int getKMESGLen()
+{
+	return len;
+}
+void setKMSEGPos(int position)
+{
+	pos = position;
+}
+
+void putcKMSEG(char c)
+{
+	if(len == SIZE)
+	{
+		memmove(buffer, buffer + 1, SIZE - 1);
+		len--;
+		pos--;
+	}
+	buffer[len] = c;
+	len++;
+}
+
+int min(int a, int b)
+{
+	if(a < b)
+		return a;
+	return b;
+}
 
 int
 kmesgRead(struct inode *ip, char *dst, int n)
 {
-    return n; // mora da bude n inace panikuje
+	memset(dst,0,n);
+	int myN = len - pos;
+	if(n < myN)
+		myN = n;
+
+	for(int i =0 ; i< myN;i++)
+	 	dst[i] = buffer[pos+ i];
+	//memmove(buffer, buffer + myN, SIZE - myN);
+	pos += myN;
+    return n;
 }
 
 int
 kmesgWrite(struct inode *ip, char *buf, int n)
 {
-	return n;
+	return -1;
 }
 
 void

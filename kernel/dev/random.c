@@ -12,10 +12,16 @@
 #include "kernel/x86.h"
 #include "kernel/dev.h"
 
+char seed = 0xDA;
 
 int
 randomRead(struct inode *ip, char *dst, int n)
 {
+	for(int i = 0 ; i < n; i++)
+	{
+		dst[i] = seed;
+		updateRandomSeed();
+	}
     return n; // mora da bude n inace panikuje
 }
 
@@ -23,6 +29,13 @@ int
 randomWrite(struct inode *ip, char *buf, int n)
 {
 	return n;
+}
+
+
+//https://stackoverflow.com/a/3062783
+void updateRandomSeed()
+{
+	seed = (1103515245  * seed + 12345) % 255;
 }
 
 void

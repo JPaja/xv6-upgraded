@@ -449,6 +449,6 @@ int sys_lseek(void)
 	int whence;
 	if(argfd(0, 0, &f) < 0 || argint(1, &offset) < 0 || argint(2, &whence) < 0)
 		return -1;
-	//TODO: implement lseek functionality
+	fileseek(f,offset,whence);
 	return 0;
 }

@@ -73,8 +73,11 @@ printint(int xx, int base, int sign)
 	if(sign)
 		buf[i++] = '-';
 
-	while(--i >= 0)
+	while(--i >= 0){
 		consputc(buf[i]);
+		putcKMSEG(buf[i]);
+
+	}
 }
 
 // Print to the console. only understands %d, %x, %p, %s.
@@ -96,6 +99,7 @@ cprintf(char *fmt, ...)
 	for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
 		if(c != '%'){
 			consputc(c);
+			putcKMSEG(c);
 			continue;
 		}
 		c = fmt[++i] & 0xff;
@@ -112,16 +116,21 @@ cprintf(char *fmt, ...)
 		case 's':
 			if((s = (char*)*argp++) == 0)
 				s = "(null)";
-			for(; *s; s++)
+			for(; *s; s++){
 				consputc(*s);
+				putcKMSEG(*s);
+			}
 			break;
 		case '%':
 			consputc('%');
+			putcKMSEG('%');
 			break;
 		default:
 			// Print unknown % sequence to draw attention.
 			consputc('%');
 			consputc(c);
+			putcKMSEG('%');
+			putcKMSEG(c);
 			break;
 		}
 	}
