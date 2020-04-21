@@ -22,7 +22,7 @@ startsWith(const char *q,const char *p)
 void dd(const char* inf, const char* of, int bs, int count, int skip, int seek)
 {
 	char buf[bs];
-
+	int writtenBlocks = 0;
 	int input = open(inf,O_RDONLY);
 	int output = open(of,O_CREATE | O_WRONLY);
 	lseek(input, skip * bs, SEEK_SET);
@@ -34,10 +34,11 @@ void dd(const char* inf, const char* of, int bs, int count, int skip, int seek)
 		n = read(input, buf, sizeof(buf));
 		if(n == 0 && count < 0)
 			break;
+		writtenBlocks++;
 		write(output,buf, bs);
 		
 	}
-	//printf("if=%s\nof=%s\nbs=%d\ncount=%d\nskip=%d\nseek=%d\n",inf,of,bs,count,skip,seek);
+	fprintf(2,"Kopriano %d blockova (%d bytes)\n",writtenBlocks, bs * writtenBlocks);
 }
 
 
