@@ -28,6 +28,8 @@ static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
 void setCursorPosition(int x, int y)
 {
+	if(y >= 25 || x >= 80)
+		panic("Preveliki x ili y");
 	int pos = y * 80 + x;
 	outb(CRTPORT, 14);
 	outb(CRTPORT + 1, pos >>  8);
