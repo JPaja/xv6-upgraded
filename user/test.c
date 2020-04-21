@@ -187,6 +187,71 @@ void TestDD5()
 	exit();
 }
 
+
+void TestSeek()
+{
+	int file = open("/home/seekTest", O_CREATE | O_RDWR);
+	int console = open("/dev/console", O_WRONLY);
+
+
+	char buff[50];
+	int i;
+	memset(buff, 'A',50);
+	for(i = 40; i< 60;i++)
+		buff[i -40] = i;
+	lseek(file, 10, 0);
+	write(file,buff,20);
+
+	lseek(file,0,0);
+	memset(buff, 'C',50);
+	write(file, buff,3);
+	lseek(file,10,1);
+	write(file, buff,3);
+	memset(buff, 'D',50);
+	//lseek(file,0,0);
+	lseek(file,10,2);
+	write(file, buff,5);
+
+	memset(buff, 'E',50);
+
+	lseek(file,0,0);
+	read(file,buff,50);
+	write(console,buff,50);
+	printf("\n");
+}
+
+
+void TestDevSeek()
+{
+	int file = open("/dev/kmesg", O_RDWR);
+	int disk = open("/dev/disk", O_RDWR);
+	int console = open("/dev/console", O_WRONLY);
+
+
+	char buff[100];
+	lseek(file,10,0);
+	read(file,buff,10);
+	lseek(file, 24, 1);
+	read(file,buff +10,40);
+	
+	lseek(disk, 100, 0);
+	read(disk,buff +50,40);
+	lseek(disk, 150, 1);
+	read(disk,buff +90,10);
+
+	write(console,buff,100);
+	printf("\n");
+}
+void TestDevDisk()
+{
+	char *args[] = { "/bin/dd" , "if=/dev/zero", "of=/dev/disk", 0 };
+	exec("/bin/dd", args);
+	exit();
+}
+
+
+
+
 int
 main(int argc, char *argv[])
 {
@@ -219,7 +284,13 @@ main(int argc, char *argv[])
 		else if(!strcmp("dd4", argv[i]))
 			TestDD4();	
 		else if(!strcmp("dd5", argv[i]))
-			TestDD5();	
+			TestDD5();
+		else if(!strcmp("seek", argv[i]))	
+			TestSeek();
+		else if(!strcmp("devseek", argv[i]))	
+			TestDevSeek();
+		else if(!strcmp("disk", argv[i]))	
+			TestDevDisk();
 	}
 
 	printf("Testing completed\n");
