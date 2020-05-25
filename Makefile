@@ -2,7 +2,6 @@ B=bootloader
 K=kernel
 U=user
 T=tools
-D=$K/dev
 
 HDRS = \
 	$K/asm.h\
@@ -26,16 +25,9 @@ HDRS = \
 	$K/traps.h\
 	$K/types.h\
 	$K/x86.h\
-	$K/dev.h\
 	$U/user.h\
 
-
 OBJS = \
-	$D/null.o\
-	$D/zero.o\
-	$D/random.o\
-	$D/kmesg.o\
-	$D/disk.o\
 	$K/bio.o\
 	$K/console.o\
 	$K/exec.o\
@@ -59,7 +51,6 @@ OBJS = \
 	$K/syscall.o\
 	$K/sysfile.o\
 	$K/sysproc.o\
-	$K/sysconsole.o\
 	$K/trapasm.o\
 	$K/trap.o\
 	$K/uart.o\
@@ -218,8 +209,6 @@ UPROGS=\
 	$U/_usertests\
 	$U/_wc\
 	$U/_zombie\
-	$U/_dd\
-	$U/_test\
 
 fs.img: $T/mkfs README $(UPROGS)
 	$T/mkfs fs.img README $(UPROGS)
@@ -243,10 +232,6 @@ endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 
 qemu: fs.img xv6.img
-	$(QEMU) $(QEMUOPTS)
-
-qemu-win: fs.img xv6.img
-	export DISPLAY=:0
 	$(QEMU) $(QEMUOPTS)
 
 qemu-memfs: xv6memfs.img

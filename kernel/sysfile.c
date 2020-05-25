@@ -441,14 +441,3 @@ sys_pipe(void)
 	fd[1] = fd1;
 	return 0;
 }
-
-int sys_lseek(void)
-{
-	struct file *f;
-	int offset;
-	int whence;
-	if(argfd(0, 0, &f) < 0 || argint(1, &offset) < 0 || argint(2, &whence) < 0)
-		return -1;
-	fileseek(f,offset,whence);
-	return 0;
-}

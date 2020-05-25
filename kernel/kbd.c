@@ -6,7 +6,6 @@
 int
 kbdgetc(void)
 {
-
 	static uint shift;
 	static uchar *charcode[4] = {
 		normalmap, shiftmap, ctlmap, ctlmap
@@ -41,7 +40,6 @@ kbdgetc(void)
 		else if('A' <= c && c <= 'Z')
 			c += 'a' - 'A';
 	}
-	updateRandomSeed(c);
 	return c;
 }
 

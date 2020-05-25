@@ -103,10 +103,6 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_lseek(void);
-extern int sys_clrscr(void);
-extern int sys_getcp(void);
-extern int sys_setcp(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -130,13 +126,6 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-
-[SYS_lseek]   sys_lseek,
-[SYS_clrscr]  sys_clrscr,
-[SYS_getcp]   sys_getcp,
-[SYS_setcp]   sys_setcp,
-
-
 };
 
 void
@@ -153,5 +142,4 @@ syscall(void)
 			curproc->pid, curproc->name, num);
 		curproc->tf->eax = -1;
 	}
-	updateRandomSeed(num & 0xFF);
 }

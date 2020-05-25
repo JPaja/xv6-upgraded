@@ -23,36 +23,6 @@ static struct {
 	struct spinlock lock;
 	int locking;
 } cons;
-#define CRTPORT 0x3d4
-static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
-
-void setCursorPosition(int x, int y)
-{
-	if(y >= 25 || x >= 80)
-		panic("Preveliki x ili y");
-	int pos = y * 80 + x;
-	outb(CRTPORT, 14);
-	outb(CRTPORT + 1, pos >>  8);
-	outb(CRTPORT, 15);
-	outb(CRTPORT + 1, pos);
-}
-
-void getCursorPosition(int* x, int* y)
-{
-	int pos;
-	outb(CRTPORT, 14);
-	pos = inb(CRTPORT+1) << 8;
-	outb(CRTPORT, 15);
-	pos |= inb(CRTPORT+1);
-	*x = pos % 80;
-	*y = pos / 80;
-}
-
-void clearScreen()
-{
-	memset(crt, 0, sizeof(crt[0])*(47*80));
-	setCursorPosition(0,0);
-}
 
 static void
 printint(int xx, int base, int sign)
@@ -75,11 +45,8 @@ printint(int xx, int base, int sign)
 	if(sign)
 		buf[i++] = '-';
 
-	while(--i >= 0){
+	while(--i >= 0)
 		consputc(buf[i]);
-		putcKMESG(buf[i]);
-
-	}
 }
 
 // Print to the console. only understands %d, %x, %p, %s.
@@ -101,7 +68,6 @@ cprintf(char *fmt, ...)
 	for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
 		if(c != '%'){
 			consputc(c);
-			putcKMESG(c);
 			continue;
 		}
 		c = fmt[++i] & 0xff;
@@ -118,21 +84,16 @@ cprintf(char *fmt, ...)
 		case 's':
 			if((s = (char*)*argp++) == 0)
 				s = "(null)";
-			for(; *s; s++){
+			for(; *s; s++)
 				consputc(*s);
-				putcKMESG(*s);
-			}
 			break;
 		case '%':
 			consputc('%');
-			putcKMESG('%');
 			break;
 		default:
 			// Print unknown % sequence to draw attention.
 			consputc('%');
 			consputc(c);
-			putcKMESG('%');
-			putcKMESG(c);
 			break;
 		}
 	}
@@ -162,7 +123,8 @@ panic(char *s)
 }
 
 #define BACKSPACE 0x100
-
+#define CRTPORT 0x3d4
+static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
 static void
 cgaputc(int c)
