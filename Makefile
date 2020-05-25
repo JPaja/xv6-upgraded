@@ -2,6 +2,7 @@ B=bootloader
 K=kernel
 U=user
 T=tools
+D=$K/dev
 
 HDRS = \
 	$K/asm.h\
@@ -25,9 +26,16 @@ HDRS = \
 	$K/traps.h\
 	$K/types.h\
 	$K/x86.h\
+	$K/dev.h\
 	$U/user.h\
 
+
 OBJS = \
+	$D/null.o\
+	$D/zero.o\
+	$D/random.o\
+	$D/kmesg.o\
+	$D/disk.o\
 	$K/bio.o\
 	$K/console.o\
 	$K/exec.o\
@@ -51,6 +59,7 @@ OBJS = \
 	$K/syscall.o\
 	$K/sysfile.o\
 	$K/sysproc.o\
+	$K/sysconsole.o\
 	$K/trapasm.o\
 	$K/trap.o\
 	$K/uart.o\
@@ -105,7 +114,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O1 -Wall -ggdb -m32 -fno-omit-frame-pointer -I.
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Og -Wall -ggdb -m32 -fno-omit-frame-pointer -I.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -I. -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -209,9 +218,11 @@ UPROGS=\
 	$U/_usertests\
 	$U/_wc\
 	$U/_zombie\
+	$U/_dd\
+	$U/_test\
 
-fs.img: $T/mkfs README boje.txt $(UPROGS)
-	$T/mkfs fs.img README boje.txt $(UPROGS)
+fs.img: $T/mkfs README $(UPROGS)
+	$T/mkfs fs.img README $(UPROGS)
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
@@ -234,6 +245,10 @@ QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,
 qemu: fs.img xv6.img
 	$(QEMU) $(QEMUOPTS)
 
+qemu-win: fs.img xv6.img
+	export DISPLAY=:0
+	$(QEMU) $(QEMUOPTS)
+
 qemu-memfs: xv6memfs.img
 	$(QEMU) -drive file=xv6memfs.img,index=0,media=disk,format=raw -smp $(CPUS) -m 256
 
@@ -250,7 +265,3 @@ qemu-gdb: fs.img xv6.img .gdbinit
 qemu-nox-gdb: fs.img xv6.img .gdbinit
 	@echo "*** Now run 'gdb'." 1>&2
 	$(QEMU) -serial mon:stdio -nographic $(QEMUOPTS) -S $(QEMUGDB)
-
-qemu-win: fs.img xv6.img
-	export DISPLAY=:0
-	$(QEMU) $(QEMUOPTS)

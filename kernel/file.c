@@ -9,6 +9,8 @@
 #include "spinlock.h"
 #include "sleeplock.h"
 #include "file.h"
+#include "stat.h"
+#include "dev.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -20,6 +22,7 @@ void
 fileinit(void)
 {
 	initlock(&ftable.lock, "ftable");
+	devInit();		 // inits all custom devs
 }
 
 // Allocate a file structure.
@@ -120,6 +123,7 @@ filewrite(struct file *f, char *addr, int n)
 
 	if(f->writable == 0)
 		return -1;
+
 	if(f->type == FD_PIPE)
 		return pipewrite(f->pipe, addr, n);
 	if(f->type == FD_INODE){
@@ -129,6 +133,19 @@ filewrite(struct file *f, char *addr, int n)
 		// and 2 blocks of slop for non-aligned writes.
 		// this really belongs lower down, since writei()
 		// might be writing a device like the console.
+		
+		if(f->ip->type == T_FILE && f->off > f->ip->size)
+		{
+			uint oldOff = f->off;
+			uint newSize = oldOff - f->ip->size;
+			char buffer[newSize];
+			memset(buffer,0, newSize);
+			f->off = f->ip->size;
+			filewrite(f,buffer,newSize);
+			f->off = oldOff;
+			f->ip->size =oldOff;
+		}
+
 		int max = ((MAXOPBLOCKS-1-1-2) / 2) * 512;
 		int i = 0;
 		while(i < n){
@@ -154,3 +171,60 @@ filewrite(struct file *f, char *addr, int n)
 	panic("filewrite");
 }
 
+int fileseek(struct file *f,int offset, int whence)
+{
+	if(f->ip->type == T_FILE)
+	{
+		switch (whence)
+		{
+			case SEEK_SET:
+				f->off = offset;
+				break;
+			case SEEK_CUR:
+				f->off += offset;
+				break;
+			case SEEK_END:
+				f->off = f->ip->size + offset;
+				break;
+			default:
+				break;
+		}
+	}
+	else if(f->ip->type == T_DEV && f->ip->major == DEVKMESG)
+	{
+		int pos = getKMESGPos();
+		switch (whence)
+		{
+			case SEEK_SET:
+				setKMSEGPos(offset);
+				break;
+			case SEEK_CUR:
+				setKMSEGPos(pos + offset);
+				break;
+			case SEEK_END:
+				panic("Whence end not implemented");
+				break;
+			default:
+				break;
+		}
+	}
+	else if(f->ip->type == T_DEV && f->ip->major == DEVDISK)
+	{
+		int pos = getDiskOffset();
+		switch (whence)
+		{
+			case SEEK_SET:
+				setDiskOffset(offset);
+				break;
+			case SEEK_CUR:
+				setDiskOffset(pos + offset);
+				break;
+			case SEEK_END:
+				panic("Whence end not implemented");
+				break;
+			default:
+				break;
+		}
+	}
+
+}

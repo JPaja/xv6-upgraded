@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "file.h": "c",
+        "fs.h": "c",
+        "sleeplock.h": "c",
+        "spinlock.h": "c",
+        "traps.h": "c",
+        "param.h": "c",
+        "defs.h": "c",
+        "types.h": "c",
+        "mmu.h": "c",
+        "proc.h": "c",
+        "x86.h": "c",
+        "fcntl.h": "c"
+    }
+}

@@ -10,6 +10,29 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+//dev/zero.c
+void            devZeroInit(void);
+
+//dev/null.c
+void            devNullInit(void);
+
+//dev/kmesg.c
+void            devKmesgInit(void);
+int             getKMESGPos(void);
+int             getKMESGLen(void);
+void            setKMSEGPos(int);
+void            putcKMESG(char);
+
+
+//dev/random.c
+void            devRandomInit(void);
+void            updateRandomSeed(char);
+
+//dev/disk.c
+void            devDiskInit(void);
+void            setDiskOffset(int);
+int             getDiskOffset(void);
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -21,6 +44,9 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+void            clearScreen(void);
+void            setCursorPosition(int,int);
+void            getCursorPosition(int*,int*);
 
 // exec.c
 int             exec(char*, char**);
@@ -33,6 +59,7 @@ void            fileinit(void);
 int             fileread(struct file*, char*, int n);
 int             filestat(struct file*, struct stat*);
 int             filewrite(struct file*, char*, int n);
+int             fileseek(struct file*, int, int);
 
 // fs.c
 void            readsb(int dev, struct superblock *sb);

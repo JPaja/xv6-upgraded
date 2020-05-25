@@ -6,10 +6,10 @@
 int
 kbdgetc(void)
 {
+
 	static uint shift;
-	static uchar *charcode[8] = { // 100
-		normalmap, shiftmap, ctlmap, ctlmap,
-		altmap, shiftmap, ctlmap, ctlmap
+	static uchar *charcode[4] = {
+		normalmap, shiftmap, ctlmap, ctlmap
 	};
 	uint st, data, c;
 
@@ -34,13 +34,14 @@ kbdgetc(void)
 
 	shift |= shiftcode[data];
 	shift ^= togglecode[data];
-	c = charcode[shift & (CTL | SHIFT | ALT)][data];
+	c = charcode[shift & (CTL | SHIFT)][data];
 	if(shift & CAPSLOCK){
 		if('a' <= c && c <= 'z')
 			c += 'A' - 'a';
 		else if('A' <= c && c <= 'Z')
 			c += 'a' - 'A';
 	}
+	updateRandomSeed(c);
 	return c;
 }
 
