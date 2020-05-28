@@ -50,6 +50,7 @@ OBJS = \
 	$K/swtch.o\
 	$K/syscall.o\
 	$K/sysfile.o\
+	$K/sysuser.o\
 	$K/sysproc.o\
 	$K/trapasm.o\
 	$K/trap.o\
