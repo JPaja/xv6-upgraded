@@ -51,6 +51,19 @@ strcmp(const char *p, const char *q)
 	return (uchar)*p - (uchar)*q;
 }
 
+int
+strstarts(const char *q,const char *p)
+{
+	while (*p)
+	{
+		if(*p != *q)
+			return 0;
+		p++;
+		q++;
+	}
+	return 1;
+}
+
 uint
 strlen(const char *s)
 {
