@@ -11,6 +11,8 @@
         "mmu.h": "c",
         "proc.h": "c",
         "x86.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "cstring": "c",
+        "typeinfo": "c"
     }
 }
