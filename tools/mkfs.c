@@ -43,7 +43,7 @@ void winode(uint, struct dinode*);
 void rinode(uint inum, struct dinode *ip);
 void rsect(uint sec, void *buf);
 uint ialloc(ushort type);
-void iappend(uint inum, void *p, int n);
+void iappend(uint inum, void *p, int n, int permission);
 
 // convert to intel byte order
 ushort
@@ -80,12 +80,12 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, ".");
-	iappend(rootino, &de, sizeof(de));
+	iappend(rootino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(rootino, &de, sizeof(de));
+	iappend(rootino, &de, sizeof(de),0);
 
 	// /dev
 	devino = ialloc(T_DIR);
@@ -93,17 +93,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(devino);
 	strcpy(de.name, ".");
-	iappend(devino, &de, sizeof(de));
+	iappend(devino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(devino, &de, sizeof(de));
+	iappend(devino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(devino);
 	strcpy(de.name, "dev");
-	iappend(rootino, &de, sizeof(de));
+	iappend(rootino, &de, sizeof(de),0);
 
 	// /bin
 	binino = ialloc(T_DIR);
@@ -111,17 +111,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(binino);
 	strcpy(de.name, ".");
-	iappend(binino, &de, sizeof(de));
+	iappend(binino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(binino, &de, sizeof(de));
+	iappend(binino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(binino);
 	strcpy(de.name, "bin");
-	iappend(rootino, &de, sizeof(de));
+	iappend(rootino, &de, sizeof(de),0);
 
 	// /home
 	homeino = ialloc(T_DIR);
@@ -129,17 +129,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(homeino);
 	strcpy(de.name, ".");
-	iappend(homeino, &de, sizeof(de));
+	iappend(homeino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(homeino, &de, sizeof(de));
+	iappend(homeino, &de, sizeof(de),0);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(homeino);
 	strcpy(de.name, "home");
-	iappend(rootino, &de, sizeof(de));
+	iappend(rootino, &de, sizeof(de),0);
 }
 
 int
@@ -225,10 +225,10 @@ main(int argc, char *argv[])
 		bzero(&de, sizeof(de));
 		de.inum = xshort(inum);
 		strncpy(de.name, shortname, DIRSIZ);
-		iappend(dirino, &de, sizeof(de));
+		iappend(dirino, &de, sizeof(de),0);
 
 		while((cc = read(fd, buf, sizeof(buf))) > 0)
-			iappend(inum, buf, cc);
+			iappend(inum, buf, cc,0);
 
 		close(fd);
 	}
@@ -324,7 +324,7 @@ balloc(int used)
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 void
-iappend(uint inum, void *xp, int n)
+iappend(uint inum, void *xp, int n, int permission)
 {
 	char *p = (char*)xp;
 	uint fbn, off, n1;
@@ -364,5 +364,6 @@ iappend(uint inum, void *xp, int n)
 		p += n1;
 	}
 	din.size = xint(off);
+	din.mod = permission;
 	winode(inum, &din);
 }
