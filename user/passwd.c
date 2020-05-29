@@ -12,18 +12,16 @@ void passwd(char* user)
 int
 main(int argc, char *argv[])
 {
-	char* user = "";
-	if(argc == 1)
+	char* user = 0;
+	if(argc == 2)
 	{
-		printf("Fali korisnicko ime\n");
-		exit();
+		user = argv[1];
 	}
 	else if(argc > 2)
 	{
 		printf("Izaberite samo jedno korisnicko ime\n");
 		exit();
 	}
-	user = argv[1];
 	passwd(user);
 	exit();
 }
