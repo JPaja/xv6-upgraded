@@ -138,7 +138,10 @@ userinit(void)
 	p->tf->eflags = FL_IF;
 	p->tf->esp = PGSIZE;
 	p->tf->eip = 0;  // beginning of initcode.S
-
+	p->uid = 0;
+	p->euid = 0;
+	memset(p->gid,-1,GIDSIZE * sizeof(*p->gid));
+	p->gid[0] = 0;
 	safestrcpy(p->name, "initcode", sizeof(p->name));
 	p->cwd = namei("/");
 
@@ -211,6 +214,11 @@ fork(void)
 	safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
 	pid = np->pid;
+
+	np->uid = curproc->uid;
+	np->euid = curproc->euid;
+	for(int i = 0; i  < GIDSIZE; i++)
+		np->gid[i] = np->gid[i];
 
 	acquire(&ptable.lock);
 
