@@ -80,12 +80,12 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, ".");
-	iappend(rootino, &de, sizeof(de),0);
+	iappend(rootino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(rootino, &de, sizeof(de),0);
+	iappend(rootino, &de, sizeof(de),0700);
 
 	// /dev
 	devino = ialloc(T_DIR);
@@ -93,17 +93,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(devino);
 	strcpy(de.name, ".");
-	iappend(devino, &de, sizeof(de),0);
+	iappend(devino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(devino, &de, sizeof(de),0);
+	iappend(devino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(devino);
 	strcpy(de.name, "dev");
-	iappend(rootino, &de, sizeof(de),0);
+	iappend(rootino, &de, sizeof(de),0700);
 
 	// /bin
 	binino = ialloc(T_DIR);
@@ -111,17 +111,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(binino);
 	strcpy(de.name, ".");
-	iappend(binino, &de, sizeof(de),0);
+	iappend(binino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(binino, &de, sizeof(de),0);
+	iappend(binino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(binino);
 	strcpy(de.name, "bin");
-	iappend(rootino, &de, sizeof(de),0);
+	iappend(rootino, &de, sizeof(de),0700);
 
 	// /home
 	homeino = ialloc(T_DIR);
@@ -129,17 +129,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(homeino);
 	strcpy(de.name, ".");
-	iappend(homeino, &de, sizeof(de),0);
+	iappend(homeino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(homeino, &de, sizeof(de),0);
+	iappend(homeino, &de, sizeof(de),0700);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(homeino);
 	strcpy(de.name, "home");
-	iappend(rootino, &de, sizeof(de),0);
+	iappend(rootino, &de, sizeof(de),0700);
 }
 
 int

@@ -22,6 +22,23 @@ fmtname(char *path)
 	return buf;
 }
 
+void modestr(char* buffer, int mode, int directory)
+{
+	if(directory)
+		buffer[0] = 'd';
+	else
+		buffer[0] = '-';
+	for(int i = 2; i >= 0; i--)
+	{
+		int bits = mode & 0x7; //111
+		buffer[1 + i * 3 + 0] = (bits & 0x4) ? 'r':'-';
+		buffer[1 + i * 3 + 1] = (bits & 0x2) ? 'w':'-';
+		buffer[1 + i * 3 + 2] = (bits & 0x1) ? 'x':'-';
+		mode = mode >> 3;
+	}
+	buffer[10] =0;
+}
+
 void
 ls(char *path)
 {
@@ -29,8 +46,8 @@ ls(char *path)
 	int fd;
 	struct dirent de;
 	struct stat st;
-
 	if((fd = open(path, 0)) < 0){
+
 		fprintf(2, "ls: cannot open %s\n", path);
 		return;
 	}
@@ -41,9 +58,12 @@ ls(char *path)
 		return;
 	}
 
+	char modebuff[11];
+
 	switch(st.type){
 	case T_FILE:
-		printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
+		modestr(modebuff, st.mod, 0);
+		printf("%s %s %d %d %d\n",modebuff, fmtname(path), st.type, st.ino, st.size);
 		break;
 
 	case T_DIR:
@@ -63,7 +83,8 @@ ls(char *path)
 				printf("ls: cannot stat %s\n", buf);
 				continue;
 			}
-			printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+			modestr(modebuff, st.mod, st.type == T_DIR);
+			printf("%s %s %d %d %d\n",modebuff, fmtname(buf), st.type, st.ino, st.size);
 		}
 		break;
 	}
