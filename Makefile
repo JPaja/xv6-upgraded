@@ -2,6 +2,7 @@ B=bootloader
 K=kernel
 U=user
 T=tools
+E=etc
 
 HDRS = \
 	$K/asm.h\
@@ -218,8 +219,14 @@ UPROGS=\
 	$U/_chown\
 	$U/_chgrp\
 
-fs.img: $T/mkfs README $(UPROGS)
-	$T/mkfs fs.img README $(UPROGS)
+ETCFILES=\
+	$E/group\
+	$E/issue\
+	$E/motd\
+	$E/passwd\
+
+fs.img: $T/mkfs README $(UPROGS) $(ETCFILES) 
+	$T/mkfs fs.img README $(UPROGS) $(ETCFILES) 
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \

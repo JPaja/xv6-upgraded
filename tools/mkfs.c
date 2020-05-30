@@ -36,6 +36,7 @@ uint rootino;
 uint homeino;
 uint binino;
 uint devino;
+uint etcno;
 
 void balloc(int);
 void wsect(uint, void*);
@@ -140,6 +141,24 @@ makedirs(void)
 	de.inum = xshort(homeino);
 	strcpy(de.name, "home");
 	iappend(rootino, &de, sizeof(de),0700);
+
+	// /etc
+	etcno = ialloc(T_DIR);
+
+	bzero(&de, sizeof(de));
+	de.inum = xshort(etcno);
+	strcpy(de.name, ".");
+	iappend(etcno, &de, sizeof(de),0700);
+
+	bzero(&de, sizeof(de));
+	de.inum = xshort(rootino);
+	strcpy(de.name, "..");
+	iappend(etcno, &de, sizeof(de),0700);
+
+	bzero(&de, sizeof(de));
+	de.inum = xshort(etcno);
+	strcpy(de.name, "etc");
+	iappend(rootino, &de, sizeof(de),0700);
 }
 
 int
@@ -196,10 +215,21 @@ main(int argc, char *argv[])
 	for(i = 2; i < argc; i++){
 		// get rid of "user/"
 		if(strncmp(argv[i], "user/", 5) == 0)
+		{
 			shortname = argv[i] + 5;
+			dirino = homeino;
+		}
+		else if(strncmp(argv[i], "etc/", 4) == 0)
+		{
+			shortname = argv[i] + 4;
+			dirino = etcno;
+		}
 		else
+		{
 			shortname = argv[i];
-
+			dirino = homeino;
+		}
+		
 		assert(index(shortname, '/') == 0);
 
 		if((fd = open(argv[i], 0)) < 0){
@@ -207,7 +237,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		dirino = homeino;
+		
 
 		// Skip leading _ in name when writing to file system.
 		// The binaries are named _rm, _cat, etc. to keep the
