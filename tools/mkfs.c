@@ -34,6 +34,7 @@ uint freeblock;
 
 uint rootino;
 uint homeino;
+uint homeRootino;
 uint binino;
 uint devino;
 uint etcno;
@@ -68,7 +69,7 @@ xint(uint x)
 	a[3] = x >> 24;
 	return y;
 }
-
+#define PERM 0774
 void
 makedirs(void)
 {
@@ -81,12 +82,12 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, ".");
-	iappend(rootino, &de, sizeof(de),0700);
+	iappend(rootino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(rootino, &de, sizeof(de),0700);
+	iappend(rootino, &de, sizeof(de),PERM);
 
 	// /dev
 	devino = ialloc(T_DIR);
@@ -94,17 +95,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(devino);
 	strcpy(de.name, ".");
-	iappend(devino, &de, sizeof(de),0700);
+	iappend(devino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(devino, &de, sizeof(de),0700);
+	iappend(devino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(devino);
 	strcpy(de.name, "dev");
-	iappend(rootino, &de, sizeof(de),0700);
+	iappend(rootino, &de, sizeof(de),PERM);
 
 	// /bin
 	binino = ialloc(T_DIR);
@@ -112,17 +113,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(binino);
 	strcpy(de.name, ".");
-	iappend(binino, &de, sizeof(de),0700);
+	iappend(binino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(binino, &de, sizeof(de),0700);
+	iappend(binino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(binino);
 	strcpy(de.name, "bin");
-	iappend(rootino, &de, sizeof(de),0700);
+	iappend(rootino, &de, sizeof(de),PERM);
 
 	// /home
 	homeino = ialloc(T_DIR);
@@ -130,17 +131,36 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(homeino);
 	strcpy(de.name, ".");
-	iappend(homeino, &de, sizeof(de),0700);
+	iappend(homeino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(homeino, &de, sizeof(de),0700);
+	iappend(homeino, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(homeino);
 	strcpy(de.name, "home");
-	iappend(rootino, &de, sizeof(de),0700);
+	iappend(rootino, &de, sizeof(de),PERM);
+
+
+	// /home/root
+	homeRootino = ialloc(T_DIR);
+	
+	bzero(&de, sizeof(de));
+	de.inum = xshort(homeRootino);
+	strcpy(de.name, ".");
+	iappend(homeRootino, &de, sizeof(de),PERM);
+
+	bzero(&de, sizeof(de));
+	de.inum = xshort(homeino);
+	strcpy(de.name, "..");
+	iappend(homeRootino, &de, sizeof(de),PERM);
+
+	bzero(&de, sizeof(de));
+	de.inum = xshort(homeRootino);
+	strcpy(de.name, "root");
+	iappend(homeino, &de, sizeof(de),PERM);
 
 	// /etc
 	etcno = ialloc(T_DIR);
@@ -148,17 +168,17 @@ makedirs(void)
 	bzero(&de, sizeof(de));
 	de.inum = xshort(etcno);
 	strcpy(de.name, ".");
-	iappend(etcno, &de, sizeof(de),0700);
+	iappend(etcno, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(rootino);
 	strcpy(de.name, "..");
-	iappend(etcno, &de, sizeof(de),0700);
+	iappend(etcno, &de, sizeof(de),PERM);
 
 	bzero(&de, sizeof(de));
 	de.inum = xshort(etcno);
 	strcpy(de.name, "etc");
-	iappend(rootino, &de, sizeof(de),0700);
+	iappend(rootino, &de, sizeof(de),PERM);
 }
 
 int
@@ -217,7 +237,7 @@ main(int argc, char *argv[])
 		if(strncmp(argv[i], "user/", 5) == 0)
 		{
 			shortname = argv[i] + 5;
-			dirino = homeino;
+			dirino = homeRootino;
 		}
 		else if(strncmp(argv[i], "etc/", 4) == 0)
 		{
@@ -227,7 +247,7 @@ main(int argc, char *argv[])
 		else
 		{
 			shortname = argv[i];
-			dirino = homeino;
+			dirino = homeRootino;
 		}
 		
 		assert(index(shortname, '/') == 0);
@@ -255,10 +275,10 @@ main(int argc, char *argv[])
 		bzero(&de, sizeof(de));
 		de.inum = xshort(inum);
 		strncpy(de.name, shortname, DIRSIZ);
-		iappend(dirino, &de, sizeof(de),0);
+		iappend(dirino, &de, sizeof(de),PERM);
 
 		while((cc = read(fd, buf, sizeof(buf))) > 0)
-			iappend(inum, buf, cc,0);
+			iappend(inum, buf, cc,PERM);
 
 		close(fd);
 	}
