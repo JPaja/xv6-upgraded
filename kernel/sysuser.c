@@ -19,13 +19,19 @@
 int
 sys_getuid(void)
 {
-	return -1;
+	struct proc * p = myproc();
+	if(p == 0)
+		return -1;
+	return p->uid;
 }
 
 int
 sys_geteuid(void)
 {
-	return -1;
+		struct proc * p = myproc();
+	if(p == 0)
+		return -1;
+	return p->euid;
 }
 
 int
