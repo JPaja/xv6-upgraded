@@ -89,3 +89,55 @@ sys_uptime(void)
 	release(&tickslock);
 	return xticks;
 }
+
+int
+sys_getuid(void)
+{
+	struct proc * p = myproc();
+	if(p == 0)
+		return -1;
+	return p->uid;
+}
+
+int
+sys_geteuid(void)
+{
+	struct proc * p = myproc();
+	if(p == 0)
+		return -1;
+	return p->euid;
+}
+
+int
+sys_setuid(void)
+{
+	int uid;
+
+	if(argint(0, &uid) < 0)
+		return -1;
+
+	struct proc * p = myproc();
+	if(p == 0 || p->euid != 0)
+		return -1;
+	p->uid = uid;
+	p->euid = uid;
+	return 0;
+}
+
+int
+sys_setgroups(void)
+{
+	int ngroups;
+	int* gids;
+
+	if(argint(0, &ngroups) < 0 || argint(1, &gids) < 0)
+		return -1;
+
+	struct proc * p = myproc();
+	if(p == 0 || p->euid != 0)
+		return -1;
+	memset(p->gid, -1, GIDSIZE * sizeof(*p->gid));
+	for(int i = 0; i < ngroups; i++)
+		p->gid[i] = gids[i];
+	return 0;
+}

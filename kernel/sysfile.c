@@ -111,7 +111,40 @@ sys_fstat(void)
 
 	if(argfd(0, 0, &f) < 0 || argptr(1, (void*)&st, sizeof(*st)) < 0)
 		return -1;
+	
 	return filestat(f, st);
+}
+
+
+int
+sys_chmod(void)
+{
+	struct file *f;
+	int mode;
+
+	if(argfd(0, 0, &f) < 0 || argint(1, &mode) < 0)
+		return -1;
+	struct proc * p = myproc();
+	if(p == 0 || !(p->euid == 0 || p->euid == f->ip->uid))
+		return -1;
+	f->ip->mod = mode;
+	return 0;
+}
+
+int
+sys_chown(void)
+{
+	struct file *f;
+	int owner, group;
+
+	if(argfd(0, 0, &f) < 0  || argint(1, &owner) < 0 || argint(2, &group) < 0)
+		return -1;
+	struct proc * p = myproc();
+	if(p == 0 || p->euid != 0)
+		return -1;
+	f->ip->uid = owner;
+	f->ip->gid = group;
+	return 0;
 }
 
 // Create the path new as a link to the same inode as old.
