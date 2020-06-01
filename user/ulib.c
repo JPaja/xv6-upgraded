@@ -3,6 +3,9 @@
 #include "kernel/fcntl.h"
 #include "user.h"
 #include "kernel/x86.h"
+// #include "kernel/types.h"
+// #include "user.h"
+// #include "kernel/fs.h"
 
 char*
 strcpy(char *s, const char *t)
@@ -147,14 +150,124 @@ memmove(void *vdst, const void *vsrc, int n)
 }
 
 
+
+
+int hasSpaces(char* str, int n)
+{
+	for(int i = 0; i < n ; i++)
+	{
+		if(str[i] == ' ')
+			return 1;
+	}
+	return 0;
+}
+
+
+int readLine(char* buffer, int n)
+{
+	return freadLine(0, buffer, n);
+}
+int freadLine(int fd, char* buffer, int n)
+{
+	int r = 0;
+	memset(buffer,0,n);
+	char c;
+	for(int i = 0; i < n - 1; i++)
+	{
+		if(read(fd,&c,1) == 0)
+			break;
+		if(c == '\n')
+			break;
+		r++;
+		buffer[i] = c;
+	}
+	return r;
+}
+
+int readUser(struct user* s, char* buff, int n)
+{
+	int id = 0;
+	char b[512];
+	int bi = 0;
+	memset(b, 0, 512);
+	for(int i = 0 ; i< n; i++)
+	{
+		if(id > 6)
+			break; 
+		char c = buff[i];
+		if(c == ':' )
+		{
+			if(hasSpaces(b, bi))
+			{
+    			return 0;//greska text ne sme da ima razmake
+			}
+			switch (id)
+			{
+				case 0:
+					memmove(s->username,b, bi);
+					break;
+				case 1:
+					memmove(s->password,b, bi);
+					break;
+				case 2:
+					s->uid = atoi(bi);
+					break;
+				case 3:
+					s->gid = atoi(bi);
+					break;
+				case 4:
+					memmove(s->realName,b, bi);
+					break;
+				case 5:
+					memmove(s->home,b, bi);
+					break;
+			}
+			bi = 0;
+			id++;
+			continue;
+		}
+		b[bi++] = c;
+		b[bi] = 0;
+
+	}
+
+	if(id < 5)
+	{
+    	return 0;
+	}
+	if(id == 6 && bi != 0)
+		memmove(s->home,b, bi);
+	return 1;
+}
+
 #define MAXUSERS 20
 #define MAXGROUPS 20
 
-// struct user** getUsers()
-// {
-    
-//     return 0;
-// }
+int getUsers(struct user* u , int max)
+{
+	memset(u,0,sizeof(&u) * max);
+	for(int i = 0; i < MAXUSERS; i++)
+		u[i].uid = -1;
+
+	int fdPasswd;
+	if((fdPasswd = open("/etc/passwd",0)) < 0)
+	{
+    	return 0;
+	}
+	char buff[512];
+	int i = 0; 
+	for(int i = 0 ; i < max; i++)
+	{
+		int n = freadLine(fdPasswd,buff, 512);
+		if(n == 0)
+			break;
+		if(!readUser(&u[i], buff, n))
+		{
+    		return 0;
+		}
+	}
+	return 1;
+}
 
 // struct groups** getUsers()
 // {
@@ -162,19 +275,44 @@ memmove(void *vdst, const void *vsrc, int n)
 //     return 0;
 // }
 
+struct user users[MAXUSERS];
 
 int getUser(struct user* buffer, int uid)
 {
+	if(!getUsers(users, MAXUSERS))
+	 	return 0;
+	for(int i = 0; i < MAXUSERS; i++)
+	{
+		if(users[i].uid == -1)
+			break;
+		if(users[i].uid == uid)
+		{
+			memmove(buffer, &users[i],sizeof(struct user));
+			return 1;
+		}
+	}
     return 0;
 }
 int getUserByName(struct user* buffer, char * name)
 {
+   	if(!getUsers(users, MAXUSERS))
+	 	return 0;
+	for(int i = 0; i < MAXUSERS; i++)
+	{
+		if(users[i].uid == -1)
+			break;
+		if(strcmp(users[i].username, name) == 0)
+		{
+			memmove(buffer, &users[i],sizeof(struct user));
+			return 1;
+		}
+	}
     return 0;
 }
 
-int loginUser(struct user* buffer, char * name, char * password)
+int loginUser(struct user* user, char * password)
 {
-    return 0;
+    return strcmp(users->password, password) == 0; //dodati hash passworda
 }
 int getGroup(struct group* buffer, int gid)
 {

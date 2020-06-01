@@ -48,12 +48,15 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
-
+int readLine(char*, int);
+int freadLine(int fd, char*, int);
+int strSplit(char*, int, char**, int);
 // auth.c
 
 #define USERMAXLEN 15
 #define PASSMAXLEN 15
 #define RNAMEMAXLEN 30
+#define USERPATHMAXLEN 100
 
 #define GROUPNAMEMAXLEN 15
 #define GROUPUSERMAXLEN 20
@@ -65,7 +68,7 @@ struct user
     int uid;
     int gid;
     char realName[RNAMEMAXLEN];
-    struct file* home;
+    char home[USERPATHMAXLEN];
 };
 
 struct group
@@ -77,7 +80,7 @@ struct group
 
 int getUser(struct user* buffer, int uid);
 int getUserByName(struct user* buffer, char * name);
-int loginUser(struct user* buffer, char * name, char * password);
+int loginUser(struct user* user, char * password);
 int getGroup(struct group* buffer, int gid);
 int getGroupByName(struct group* buffer, char * name);
 

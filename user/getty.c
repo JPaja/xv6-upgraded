@@ -22,28 +22,7 @@ void writePreLogin()
 	}
 }
 
-void readLine(char* buffer, int n)
-{
-	char c;
-	for(int i = 0; i < n; i++)
-	{
-		read(0,&c,1);
-		if(c == '\n')
-			break;
-		buffer[i] = c;
-	}
-}
-void readString(char* buffer, int n)
-{
-	char c;
-	for(int i = 0; i < n; i++)
-	{
-		read(0,&c,1);
-		if(c == '\n' || c == ' ')
-			break;
-		buffer[i] = c;
-	}
-}
+
 
 
 void login()
@@ -56,6 +35,12 @@ void login()
 		printf("Korisnicko ime: ");
 		memset(username, 0, sizeof(username));
 		readLine(username, sizeof(username));
+		struct user user;
+		if(!getUserByName(&user,username))
+		{
+			printf("Ne postoji user\n");
+			continue;
+		}
 
 		printf("Sifra: ");
 		memset(password, 0, sizeof(password));
@@ -63,9 +48,13 @@ void login()
 		readLine(password, sizeof(password));
 		setecho(1);
 		printf("\n");
-		if(loginUser(&u,username, password))
-			break;
-		//printf("Nevalidni kredencijali\n", password);
+		if(!loginUser(&u, password))
+		{
+			printf("Pogresna sifra!\n", password);
+			continue;
+		}
+
+		break;
 	}
 	
 	
