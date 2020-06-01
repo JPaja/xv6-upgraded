@@ -239,9 +239,64 @@ int readUser(struct user* s, char* buff, int n)
 		memmove(s->home,b, bi);
 	return 1;
 }
+int readGroup(struct group* g, char* buff, int n)
+{
+	int id = 0;
+	char b[512];
+	int bi = 0;
+	memset(b, 0, 512);
+	for(int i = 0 ; i< n; i++)
+	{
+		if(id > 6)
+			break; 
+		char c = buff[i];
+		if(c == ':' )
+		{
+			if(hasSpaces(b, bi))
+			{
+    			return 0;//greska text ne sme da ima razmake
+			}
+			struct user u;
+			switch (id)
+			{
+				case 0:
+					memmove(g->name,b, bi);
+					break;
+				case 1:
+					g->gid = atoi(bi);
+					break;
+				default:
+					
+					if(!getUserByName(&u,bi))
+						return 0; //greska pri ucitavanju usera;
+					memmove(&g->users[i], &u, sizeof(struct user));
+					break;
+			}
+			bi = 0;
+			id++;
+			continue;
+		}
+		b[bi++] = c;
+		b[bi] = 0;
+	}
 
-#define MAXUSERS 20
-#define MAXGROUPS 20
+	if(id < 2)
+	{
+    	return 0;
+	}
+	if(bi != 0)
+	{
+		struct user u;
+		if(!getUserByName(&u,bi))
+			return 0; //greska pri ucitavanju usera;
+		memmove(&g->users[id], &u, sizeof(struct user));
+	}
+	return 1;
+}
+
+
+#define MAXUSERS 10
+#define MAXGROUPS 10
 
 int getUsers(struct user* u , int max)
 {
@@ -270,12 +325,38 @@ int getUsers(struct user* u , int max)
 }
 
 // struct groups** getUsers()
-// {
-    
-//     return 0;
-// }
+
+
+int getGroups(struct group* g , int max)
+{
+	memset(g,0,sizeof(&g) * max);
+	for(int i = 0; i < MAXGROUPS; i++)
+		g[i].gid = -1;
+
+	int fdPasswd;
+	if((fdPasswd = open("/etc/group",0)) < 0)
+	{
+    	return 0;
+	}
+	char buff[512];
+	int i = 0; 
+	for(int i = 0 ; i < max; i++)
+	{
+		int n = freadLine(fdPasswd,buff, 512);
+		if(n == 0)
+			break;
+		if(!readGroup(&g[i], buff, n))
+		{
+			close(fdPasswd);
+    		return 0;
+		}
+	}
+	close(fdPasswd);
+	return 1;
+}
 
 struct user users[MAXUSERS];
+struct group groups[MAXGROUPS];
 
 int getUser(struct user* buffer, int uid)
 {
@@ -312,7 +393,7 @@ int getUserByName(struct user* buffer, char * name)
 
 int loginUser(struct user* user, char * password)
 {
-    return strcmp(users->password, password) == 0; //dodati hash passworda
+    return strcmp(users->password, password) == 0; //TODO: dodati hash passworda
 }
 int getGroup(struct group* buffer, int gid)
 {

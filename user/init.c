@@ -25,15 +25,15 @@ main(void)
 	dup(0);  // stderr
 
 	for(;;){
-		printf("init: starting sh\n");
+		printf("init: starting getty\n");
 		pid = fork();
 		if(pid < 0){
 			printf("init: fork failed\n");
 			exit();
 		}
 		if(pid == 0){
-			exec("/bin/sh", argv);
-			printf("init: exec sh failed\n");
+			exec("/bin/getty", argv);
+			printf("init: exec getty failed\n");
 			exit();
 		}
 		while((wpid=wait()) >= 0 && wpid != pid)

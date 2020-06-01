@@ -53,7 +53,7 @@ void login()
 			printf("Pogresna sifra!\n", password);
 			continue;
 		}
-
+		chdir(u.home);
 		break;
 	}
 	
@@ -82,11 +82,25 @@ void getty()
 	writePreLogin();
 	login();
 	writePostLogin();
+	
 }
 
 int
 main(int argc, char *argv[])
 {
 	getty();
+	int pid, wpid;
+	pid = fork();
+	if(pid < 0){
+		printf("init: fork failed\n");
+		exit();
+	}
+	if(pid == 0){
+		exec("/bin/sh", argv);
+		printf("init: exec sh failed\n");
+		exit();
+	}
+	while((wpid=wait()) >= 0 && wpid != pid)
+		printf("zombie!\n");
 	exit();
 }
