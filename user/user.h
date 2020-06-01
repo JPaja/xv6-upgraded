@@ -29,6 +29,7 @@ int setuid(int);
 int setgroups(int,int*);
 int chmod(const char*,int);
 int chown(const char*,int,int);
+int setecho(int);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -47,3 +48,38 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+// auth.c
+
+#define USERMAXLEN 15
+#define PASSMAXLEN 15
+#define RNAMEMAXLEN 30
+
+#define GROUPNAMEMAXLEN 15
+#define GROUPUSERMAXLEN 20
+
+struct user
+{
+    char username[USERMAXLEN];
+    char password[PASSMAXLEN];
+    int uid;
+    int gid;
+    char realName[RNAMEMAXLEN];
+    struct file* home;
+};
+
+struct group
+{
+    char name[USERMAXLEN];
+    int gid;
+    struct user users[GROUPUSERMAXLEN];
+};
+
+int getUser(struct user* buffer, int uid);
+int getUserByName(struct user* buffer, char * name);
+int loginUser(struct user* buffer, char * name, char * password);
+int getGroup(struct group* buffer, int gid);
+int getGroupByName(struct group* buffer, char * name);
+
+int addUser(struct user* user);
+int addGroup(struct group* user);

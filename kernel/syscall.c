@@ -110,6 +110,7 @@ extern int sys_setuid(void);
 extern int sys_setgroups(void);
 extern int sys_chmod(void);
 extern int sys_chown(void);
+extern int sys_setecho(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -139,6 +140,7 @@ static int (*syscalls[])(void) = {
 [SYS_setgroups]   sys_setgroups,
 [SYS_chmod]   sys_chmod,
 [SYS_chown]   sys_chown,
+[SYS_setecho]   sys_setecho,
 };
 
 void

@@ -186,6 +186,12 @@ struct {
 
 #define C(x)  ((x)-'@')  // Control-x
 
+int echoFlag = 1;
+void setEcho(int flag)
+{
+	echoFlag = flag;
+}
+
 void
 consoleintr(int (*getc)(void))
 {
@@ -215,7 +221,8 @@ consoleintr(int (*getc)(void))
 			if(c != 0 && input.e-input.r < INPUT_BUF){
 				c = (c == '\r') ? '\n' : c;
 				input.buf[input.e++ % INPUT_BUF] = c;
-				consputc(c);
+				if(echoFlag)
+					consputc(c);
 				if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
 					input.w = input.e;
 					wakeup(&input.r);

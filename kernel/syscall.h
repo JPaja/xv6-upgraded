@@ -26,3 +26,4 @@
 #define SYS_setgroups  25
 #define SYS_chmod  26
 #define SYS_chown  27
+#define SYS_setecho  28

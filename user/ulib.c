@@ -145,3 +145,51 @@ memmove(void *vdst, const void *vsrc, int n)
 		*dst++ = *src++;
 	return vdst;
 }
+
+
+#define MAXUSERS 20
+#define MAXGROUPS 20
+
+// struct user** getUsers()
+// {
+    
+//     return 0;
+// }
+
+// struct groups** getUsers()
+// {
+    
+//     return 0;
+// }
+
+
+int getUser(struct user* buffer, int uid)
+{
+    return 0;
+}
+int getUserByName(struct user* buffer, char * name)
+{
+    return 0;
+}
+
+int loginUser(struct user* buffer, char * name, char * password)
+{
+    return 0;
+}
+int getGroup(struct group* buffer, int gid)
+{
+    return 0;
+}
+int getGroupByName(struct group* buffer, char * name)
+{
+    return 0;
+}
+
+int addUser(struct user* user)
+{
+    return 0;
+}
+int addGroup(struct group* user)
+{
+    return 0;
+}
