@@ -6,9 +6,33 @@
 void useradd(char* dir, int uid, char* name, char* login)
 {	
 
-
-
-	printf("%s %d %s %s\n", dir, uid, name, login);
+	if(uid < 0)
+	{
+		struct user s;
+		int i;
+		for(i = 1001; getUser(&s, i) ;i++);
+		uid = i;
+	}
+	struct user s;
+	if(getUser(&s, uid))
+	{
+		printf("Korisnicki id je zauzet");
+		return;
+	}
+	s.uid = uid;
+	s.gid = -1;
+	memset(s.home, 0, USERPATHMAXLEN);
+	memmove(s.home, dir, strlen(dir));
+	memset(s.password, 0, PASSMAXLEN);
+	memset(s.username, 0, USERMAXLEN);
+	memmove(s.username, login, strlen(login));
+	memset(s.realName, 0, RNAMEMAXLEN);
+	memmove(s.realName, name, strlen(name));
+	if(!addUser(&s))
+	{
+		printf("Greska pri dodavanju korisnika");
+		return;
+	}
 }
 int
 main(int argc, char *argv[])
@@ -93,8 +117,14 @@ main(int argc, char *argv[])
 		memmove(newDir, defPath, defLen);
 		memmove(newDir + defLen, login, loginLen);
 		newDir[loginLen + defLen] = '\0';
-		printf("%s\n",newDir);
 		dir = newDir;
+	}
+	char newName[loginLen +1];
+	if(!name)
+	{
+	 	memmove(newName, login, loginLen);
+	 	newName[loginLen] = '\0';
+		name = newName;
 	}
 
 	useradd(dir,uid,name, login);

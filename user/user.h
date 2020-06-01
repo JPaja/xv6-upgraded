@@ -54,7 +54,7 @@ int strSplit(char*, int, char**, int);
 // auth.c
 
 #define USERMAXLEN 15
-#define PASSMAXLEN 15
+#define PASSMAXLEN 30
 #define RNAMEMAXLEN 30
 #define USERPATHMAXLEN 100
 
@@ -83,6 +83,10 @@ int getUserByName(struct user* buffer, char * name);
 int loginUser(struct user* user, char * password);
 int getGroup(struct group* buffer, int gid);
 int getGroupByName(struct group* buffer, char * name);
-
+int updateUser(struct user* user);
 int addUser(struct user* user);
-int addGroup(struct group* user);
+int removeUser(struct user* user);
+
+int updateGroup(struct group* group);
+int addGroup(struct group* group);
+int removeGroup(struct group* group);

@@ -6,7 +6,40 @@
 
 void passwd(char* user)
 {
-	printf("%s\n",user);
+	struct user u;
+	if(user == 0)
+	{
+		int uid = getuid();
+		if(!getUser(&u, uid))
+		{
+			printf("Greska pri ucitavanju trenutnog korisnika\n");
+			return;
+		}
+	}
+	else
+	{
+		if(!getUserByName(&u, user))
+		{
+			printf("Greska pri ucitavanju korisnika\n");
+			return;
+		}
+	}
+	char password[512];
+	printf("Nova sifra: ");
+	memset(password, 0, sizeof(password));
+	setecho(0);
+	readLine(password, sizeof(password));
+	setecho(1);
+	printf("\n");
+
+	memmove(u.password, password, PASSMAXLEN);
+
+	if(!updateUser(&u))
+	{
+		printf("Greska pri izmeni sifre\n");
+		return;
+	}
+	printf("Sifra promenjena\n");
 }
 
 int

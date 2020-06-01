@@ -3,6 +3,7 @@
 #include "kernel/fcntl.h"
 #include "user.h"
 #include "kernel/x86.h"
+
 // #include "kernel/types.h"
 // #include "user.h"
 // #include "kernel/fs.h"
@@ -210,10 +211,10 @@ int readUser(struct user* s, char* buff, int n)
 					memmove(s->password,b, bi);
 					break;
 				case 2:
-					s->uid = atoi(bi);
+					s->uid = atoi(b);
 					break;
 				case 3:
-					s->gid = atoi(bi);
+					s->gid = atoi(b);
 					break;
 				case 4:
 					memmove(s->realName,b, bi);
@@ -235,7 +236,7 @@ int readUser(struct user* s, char* buff, int n)
 	{
     	return 0;
 	}
-	if(id == 6 && bi != 0)
+	if(id == 5 && bi != 0)
 		memmove(s->home,b, bi);
 	return 1;
 }
@@ -355,6 +356,28 @@ int getGroups(struct group* g , int max)
 	return 1;
 }
 
+
+int writeUsers(struct user* u , int max)
+{
+	unlink("/etc/passwd");
+	int fdPasswd;
+	if((fdPasswd = open("/etc/passwd",O_CREATE | O_RDWR)) < 0)
+	{
+    	return 0;
+	}
+	int ii =0;
+	for(int i = 0 ; i < max; i++)
+	{
+		if(u[i].uid < 0)
+			continue;
+		if(ii++ != 0)
+			fprintf(fdPasswd,"\n");
+		fprintf(fdPasswd, "%s:%s:%d:%d:%s:%s", u[i].username,u[i].password,u[i].uid,u[i].gid,u[i].realName,u[i].home);
+	}
+	close(fdPasswd);
+	return 1;
+}
+
 struct user users[MAXUSERS];
 struct group groups[MAXGROUPS];
 
@@ -391,6 +414,51 @@ int getUserByName(struct user* buffer, char * name)
     return 0;
 }
 
+int updateUser(struct user* user)
+{
+	if(!getUsers(users, MAXUSERS))
+	 	return 0;
+	for(int i = 0; i < MAXUSERS;i++)
+	{
+		if(users[i].uid == user->uid)
+		{
+			memmove(&users[i], user, sizeof(struct user));
+			writeUsers(users, MAXUSERS);
+			return 1;
+		}
+	}
+	return 0;
+}
+int addUser(struct user* user)
+{
+	if(!getUsers(users, MAXUSERS))
+	 	return 0;
+	for(int i = 0; i < MAXUSERS;i++)
+	{
+		if(users[i].uid < 0){
+			memmove(&users[i], user, sizeof(struct user));
+			writeUsers(users, MAXUSERS);
+			return 1;
+		}
+	}
+	return 0;
+}
+int removeUser(struct user* user)
+{
+	if(!getUsers(users, MAXUSERS))
+	 	return 0;
+	for(int i = 0; i < MAXUSERS;i++)
+	{
+		if(users[i].uid == user->uid)
+		{
+			users[i].uid  = -1;
+			writeUsers(users, MAXUSERS);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int loginUser(struct user* user, char * password)
 {
     return strcmp(users->password, password) == 0; //TODO: dodati hash passworda
@@ -404,11 +472,16 @@ int getGroupByName(struct group* buffer, char * name)
     return 0;
 }
 
-int addUser(struct user* user)
+
+int updateGroup(struct group* group)
 {
-    return 0;
+	return 0;
 }
-int addGroup(struct group* user)
+int addGroup(struct group* group)
 {
-    return 0;
+	return 0;
+}
+int removeGroup(struct group* group)
+{
+	return 0;
 }

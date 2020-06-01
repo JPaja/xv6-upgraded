@@ -175,7 +175,7 @@ tags: $(OBJS) $K/entryother.S $U/_init
 $K/vectors.S: $T/vectors.pl
 	$T/vectors.pl > $K/vectors.S
 
-ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
+ULIB = $U/printf.o $U/ulib.o $U/usys.o  $U/umalloc.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
@@ -183,7 +183,7 @@ _%: %.o $(ULIB)
 $U/_forktest: $U/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o $U/printf.o
 
 $T/mkfs: $T/mkfs.c $K/fs.h
 	gcc -Wall -I. -o $T/mkfs $T/mkfs.c
