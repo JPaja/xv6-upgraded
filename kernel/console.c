@@ -208,13 +208,15 @@ consoleintr(int (*getc)(void))
 			while(input.e != input.w &&
 			      input.buf[(input.e-1) % INPUT_BUF] != '\n'){
 				input.e--;
-				consputc(BACKSPACE);
+				if(echoFlag)
+					consputc(BACKSPACE);
 			}
 			break;
 		case C('H'): case '\x7f':  // Backspace
 			if(input.e != input.w){
 				input.e--;
-				consputc(BACKSPACE);
+				if(echoFlag)
+					consputc(BACKSPACE);
 			}
 			break;
 		default:
