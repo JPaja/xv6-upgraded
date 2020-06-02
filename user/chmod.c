@@ -55,7 +55,7 @@ void changemode2(int group, int action, int type, char* files[],int n)
 					mode = mode & ~((1 << type) << group * 3);
 			}
 		}
-		if(!chmod(files[i], mode))
+		if(chmod(files[i], mode))
 		{
 			printf("Greska pri menjanju moda u fajlu %s\n", files[i]);
 			return;
@@ -68,7 +68,7 @@ void changemode1(int mode, char* files[],int n)
 {
 	for(int i =0 ; i < n; i++)
 	{
-		if(!chmod(files[i], mode))
+		if(chmod(files[i], mode))
 		{
 			printf("Greska pri menjanju moda u fajlu %s\n", files[i]);
 			return;
