@@ -265,7 +265,9 @@ int readGroup(struct group* g, char* buff, int n)
 				default:
 					
 					if(!getUserByName(&u,b))
+					{
 						return 0; //greska pri ucitavanju usera;
+					}
 					memmove(&g->users[id - 2], &u, sizeof(struct user));
 					break;
 			}
@@ -277,13 +279,16 @@ int readGroup(struct group* g, char* buff, int n)
 		b[bi] = 0;
 	}
 
-	if(id < 2)
+	if(id < 2){
     	return 0;
+	}
 	if(bi != 0)
 	{ 
 		struct user u;
 		if(!getUserByName(&u,b))
+		{
 			return 0; //greska pri ucitavanju usera;
+		}
 		memmove(&g->users[id - 2], &u, sizeof(struct user));
 	}
 	return 1;
@@ -295,7 +300,7 @@ int readGroup(struct group* g, char* buff, int n)
 
 int getUsers(struct user* u , int max)
 {
-	memset(u,0,sizeof(&u) * max);
+	memset(u,0,sizeof(struct user) * max);
 	for(int i = 0; i < MAXUSERS; i++)
 		u[i].uid = -1;
 
@@ -316,6 +321,7 @@ int getUsers(struct user* u , int max)
     		return 0;
 		}
 	}
+	close(fdPasswd);
 	return 1;
 }
 
@@ -337,6 +343,7 @@ int getGroups(struct group* g , int max)
 	int fdPasswd;
 	if((fdPasswd = open("/etc/group",0)) < 0)
 	{
+
     	return 0;
 	}
 
@@ -431,7 +438,9 @@ int getUser(struct user* buffer, int uid)
 int getUserByName(struct user* buffer, char * name)
 {
    	if(!getUsers(users, MAXUSERS))
+	   {
 	 	return 0;
+	   }
 	for(int i = 0; i < MAXUSERS; i++)
 	{
 		if(users[i].uid == -1)
@@ -546,7 +555,9 @@ int updateGroup(struct group* group)
 int addGroup(struct group* group)
 {
 	if(!getGroups(groups, MAXGROUPS))
+	{
 	 	return 0;
+	}
 	for(int i = 0; i < MAXGROUPS;i++)
 	{
 		if(groups[i].gid < 0)

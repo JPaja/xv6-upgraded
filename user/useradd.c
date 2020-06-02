@@ -9,22 +9,21 @@ struct group g;
 
 void useradd(char* dir, int uid, char* name, char* login)
 {	
-
+	int i;
 	if(uid < 0)
 	{
 		struct user s;
-		int i;
 		for(i = 1001; getUser(&s, i) ;i++);
 		uid = i;
 	}
 	struct user s;
 	if(getUser(&s, uid))
 	{
-		printf("Korisnicki id je zauzet");
+		printf("Korisnicki id je zauzet\n");
 		return;
 	}
 	s.uid = uid;
-	s.gid = uid;
+	
 	
 	memset(s.home, 0, USERPATHMAXLEN);
 	memmove(s.home, dir, strlen(dir));
@@ -34,24 +33,27 @@ void useradd(char* dir, int uid, char* name, char* login)
 	memset(s.realName, 0, RNAMEMAXLEN);
 	memmove(s.realName, name, strlen(name));
 
-	
-	if(!addUser(&s))
-	{
-		printf("Greska pri dodavanju korisnika");
-		return;
-	}
+	for(i = 1001; getGroup(&g, i) ;i++);
+	memset(&g, 0, sizeof(struct group));
+	int gid = i;
+	s.gid = gid;
+	g.gid = gid;
 	memset(g.name, 0, USERMAXLEN);
 	memmove(g.name, login, strlen(login));
-	g.gid = uid;
 	memset(g.users,0 , GROUPUSERMAXLEN * sizeof(struct user));
 	memmove(&g.users[0],&s,sizeof(struct user));
 	for(int i = 1; i < GROUPUSERMAXLEN; i++)
 		g.users[i].uid = -1;
-	
+
+	if(!addUser(&s))
+	{
+		printf("Greska pri dodavanju korisnika\n");
+		return;
+	}
 	if(!addGroup(&g))
 	{
-		printf("Greska pri dodavanju grupe");
-		removeUser(&s);
+		printf("Greska pri dodavanju grupe\n");
+		//removeUser(&s);
 		return;
 	}
 	int fd = open(s.home,0);
@@ -59,14 +61,14 @@ void useradd(char* dir, int uid, char* name, char* login)
 	{
 		if(mkdir(s.home) < 0)
 		{
-			printf("Greska pri pavljenju home direktorijuma");
-			removeUser(&s);
-			removeGroup(&g);
+			printf("Greska pri pavljenju home direktorijuma\n");
+			//removeUser(&s);
+			//removeGroup(&g);
 			return;
 		}
 	}
 	close(fd);
-	printf("Korisnik je dodat");
+	printf("Korisnik je dodat\n");
 }
 int
 main(int argc, char *argv[])
