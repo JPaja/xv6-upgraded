@@ -53,7 +53,7 @@ void useradd(char* dir, int uid, char* name, char* login)
 	if(!addGroup(&g))
 	{
 		printf("Greska pri dodavanju grupe\n");
-		//removeUser(&s);
+		removeUser(&s);
 		return;
 	}
 	int fd = open(s.home,0);
@@ -62,8 +62,8 @@ void useradd(char* dir, int uid, char* name, char* login)
 		if(mkdir(s.home) < 0)
 		{
 			printf("Greska pri pavljenju home direktorijuma\n");
-			//removeUser(&s);
-			//removeGroup(&g);
+			removeUser(&s);
+			removeGroup(&g);
 			return;
 		}
 	}
@@ -79,7 +79,6 @@ main(int argc, char *argv[])
 	char* login = 0;
 	for(int i = 1; i < argc; i++)
 	{
-		//printf("%s\n", argv[i]);
 		if(!strcmp(argv[i], "-d"))
 		{
 			if(dir)

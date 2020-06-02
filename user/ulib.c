@@ -441,6 +441,7 @@ int getUser(struct user* buffer, int uid)
 }
 int getUserByName(struct user* buffer, char * name)
 {
+	memset(buffer,0,sizeof(struct user));
    	if(!getUsers(users, MAXUSERS))
 	   {
 	 	return 0;
@@ -505,7 +506,10 @@ int removeUser(struct user* user)
 
 int loginUser(struct user* user, char * password)
 {
-    return strcmp(users->password, password) == 0; //TODO: dodati hash passworda
+	printf("Login check: %s %s\n", user->password , password);
+	int val = strcmp(users->password, password);
+	printf("%d\n",val);
+    return val == 0; //TODO: dodati hash passworda
 }
 int getGroup(struct group* buffer, int gid)
 {

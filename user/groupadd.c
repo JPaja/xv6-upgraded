@@ -32,7 +32,6 @@ void groupadd(int gid, char* name)
 	if(!addGroup(&g))
 	{
 		printf("Greska pri dodavanju grupe\n");
-		//removeUser(&s);
 		return;
 	}
 	printf("Grpupa je dodata\n");
@@ -47,7 +46,6 @@ main(int argc, char *argv[])
 	{
 		 if(!strcmp(argv[i], "-g"))
 		{
-			printf("fok\n");
 			if(gid >= 0)
 			{
 				printf("Greska: -g je vec posatvljen\n");
