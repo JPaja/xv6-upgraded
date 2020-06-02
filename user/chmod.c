@@ -80,10 +80,15 @@ atoo(const char *s)
 {
 	int n;
 	n = 0;
+	int i =0;
 	while (1)
 	{
-		if(*s == '\n' || s == 0 || s == ' ')
-			break;
+		if(*s == '\n' || *s == 0 || *s == ' ')
+			if(i == 0)
+				return -1;
+			else
+				break;
+		i++;
 		if('0' <= *s && *s <= '7')
 		{
 			n = n << 3;
@@ -131,16 +136,16 @@ int parseMod(char * arg, int* group, int* action, int* type)
 	switch (arg[2])
 	{
 	case 'r':
-		*action = 2;
+		*type = 2;
 		break;
 	case 'w':
-		*action = 1;
+		*type = 1;
 		break;
 	case 'x':
-		*action = 0;
+		*type = 0;
 		break;
 	case 's':
-		*action = 3;
+		*type = 3;
 		break;
 	default:
 		return 0;
@@ -158,7 +163,7 @@ main(int argc, char *argv[])
 	}
 	int mode;
 	int group, action, type;
-	if((mode == atoo(argv[1]) >= 0))
+	if((mode = atoo(argv[1]) >= 0))
 	{
 		changemode1(mode, argv + 2, argc -2);
 	}
