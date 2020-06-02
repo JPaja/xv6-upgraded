@@ -96,3 +96,4 @@ int addGroup(struct group* group);
 int removeGroup(struct group* group);
 
 int getGroupsByUser(struct group* g , int* len, struct user* u);
+int addGroupUser(struct group* group, struct user* user);

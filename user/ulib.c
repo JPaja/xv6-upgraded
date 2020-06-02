@@ -580,7 +580,22 @@ int getGroupsByUser(struct group* g , int* len, struct user* u)
 	return 1;
 }
 
-
+int addGroupUser(struct group* group, struct user* user)
+{
+	for (int i = 0; i < GROUPUSERMAXLEN; i++)
+	{
+		if(group->users[i].uid == user->uid)
+			return 1; //vec postoji
+		if(group->users[i].uid < 0)
+		{
+			memmove(&groups->users[i], user,sizeof(struct user));
+			updateGroup(group);
+			return 1;
+		}
+	}
+	
+	return 0;
+}
 int updateGroup(struct group* group)
 {
 	if(!getGroups(groups, MAXGROUPS))

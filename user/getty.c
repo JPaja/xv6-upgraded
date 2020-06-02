@@ -20,6 +20,7 @@ void writePreLogin()
 			exit();
 		}
 	}
+	close(fdIssue);
 }
 
 
@@ -37,6 +38,7 @@ void writePostLogin()
 			exit();
 		}
 	}
+	close(fdIssue);
 }
 
 
