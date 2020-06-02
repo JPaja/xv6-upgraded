@@ -53,7 +53,6 @@ void useradd(char* dir, int uid, char* name, char* login)
 		removeUser(&s);
 		return;
 	}
-	printf("Greska pri dodavanju grupe ne ");
 	int fd = open(s.home,0);
 	if(fd < 0)
 	{
@@ -66,6 +65,7 @@ void useradd(char* dir, int uid, char* name, char* login)
 		}
 	}
 	close(fd);
+	printf("Korisnik je dodat");
 }
 int
 main(int argc, char *argv[])

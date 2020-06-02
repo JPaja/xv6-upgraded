@@ -380,6 +380,7 @@ int writeUsers(struct user* u , int max)
 	return 1;
 }
 
+int j;
 int writeGroups(struct group* g , int max)
 {
 	unlink("/etc/group");
@@ -396,7 +397,7 @@ int writeGroups(struct group* g , int max)
 		if(ii++ != 0)
 			fprintf(fdGroup,"\n");
 		fprintf(fdGroup, "%s:%d", g[i].name,g[i].gid);
-		for(int j = 0; j < GROUPUSERMAXLEN; j++)
+		for(j = 0; j < GROUPUSERMAXLEN; j++)
 		{
 			if(g[i].users[j].uid < 0)
 				continue;
@@ -535,7 +536,7 @@ int updateGroup(struct group* group)
 		if(groups[i].gid == group->gid)
 		{
 			memmove(&groups[i], group,sizeof(struct group));
-			writeGroups(users, MAXUSERS);
+			writeGroups(groups, MAXGROUPS);
 			return 1;
 		}
 	}
@@ -550,7 +551,7 @@ int addGroup(struct group* group)
 		if(groups[i].gid < 0)
 		{
 			memmove(&groups[i], group,sizeof(struct group));
-			writeGroups(users, MAXUSERS);
+			writeGroups(groups, MAXGROUPS);
 			return 1;
 		}
 	}
@@ -565,7 +566,7 @@ int removeGroup(struct group* group)
 		if(groups[i].gid  == group->gid)
 		{
 			groups[i].gid = -1;
-			writeGroups(users, MAXUSERS);
+			writeGroups(groups, MAXGROUPS);
 			return 1;
 		}
 	}
