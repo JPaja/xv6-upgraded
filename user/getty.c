@@ -35,16 +35,17 @@ void login()
 		printf("Korisnicko ime: ");
 		memset(username, 0, sizeof(username));
 		readLine(username, sizeof(username));
+		memset(&u,0,sizeof(struct user));
 		if(!getUserByName(&u,username))
 		{
 			printf("Ne postoji user\n");
 			continue;
 		}
-		printf("%s %s\n",u.username, u.password);
 		printf("Sifra: ");
 		memset(password, 0, sizeof(password));
 		setecho(0);
 		readLine(password, sizeof(password));
+		
 		setecho(1);
 		printf("\n");
 		if(!loginUser(&u, password))

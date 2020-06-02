@@ -503,13 +503,23 @@ int removeUser(struct user* user)
 	}
 	return 0;
 }
+int rstrcmp(char * s1, char * s2)
+{
+	int l1 = strlen(s1);
+	int l2 = strlen(s2);
+	if(l1 != l2)
+		return 0;
+	for(int i =0 ; i < l1; i++)
+	{
+		if(s1[i] != s2[i])
+			return 0;
+	}
+	return 1;
+}
 
 int loginUser(struct user* user, char * password)
 {
-	printf("Login check: %s %s\n", user->password , password);
-	int val = strcmp(users->password, password);
-	printf("%d\n",val);
-    return val == 0; //TODO: dodati hash passworda
+    return rstrcmp(user->password, password); //TODO: dodati hash passworda
 }
 int getGroup(struct group* buffer, int gid)
 {
