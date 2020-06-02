@@ -2,6 +2,10 @@
 #include "kernel/stat.h"
 #include "user.h"
 #include "kernel/fs.h"
+#include "kernel/fcntl.h"
+
+struct group g;
+
 
 void useradd(char* dir, int uid, char* name, char* login)
 {	
@@ -20,7 +24,8 @@ void useradd(char* dir, int uid, char* name, char* login)
 		return;
 	}
 	s.uid = uid;
-	s.gid = -1;
+	s.gid = uid;
+	
 	memset(s.home, 0, USERPATHMAXLEN);
 	memmove(s.home, dir, strlen(dir));
 	memset(s.password, 0, PASSMAXLEN);
@@ -28,11 +33,37 @@ void useradd(char* dir, int uid, char* name, char* login)
 	memmove(s.username, login, strlen(login));
 	memset(s.realName, 0, RNAMEMAXLEN);
 	memmove(s.realName, name, strlen(name));
+
+	
 	if(!addUser(&s))
 	{
 		printf("Greska pri dodavanju korisnika");
 		return;
 	}
+	memset(g.name, 0, USERMAXLEN);
+	memmove(g.name, login, strlen(login));
+	g.gid = uid;
+	memset(g.users,0 , GROUPUSERMAXLEN * sizeof(struct user));
+	memmove(&g.users[0],&s,sizeof(struct user));
+	if(!addGroup(&g))
+	{
+		printf("Greska pri dodavanju grupe");
+		removeUser(&s);
+		return;
+	}
+	printf("Greska pri dodavanju grupe ne ");
+	int fd = open(s.home,0);
+	if(fd < 0)
+	{
+		if(mkdir(s.home) < 0)
+		{
+			printf("Greska pri pavljenju home direktorijuma");
+			removeUser(&s);
+			removeGroup(&g);
+			return;
+		}
+	}
+	close(fd);
 }
 int
 main(int argc, char *argv[])
