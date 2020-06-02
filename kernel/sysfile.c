@@ -111,7 +111,6 @@ sys_fstat(void)
 
 	if(argfd(0, 0, &f) < 0 || argptr(1, (void*)&st, sizeof(*st)) < 0)
 		return -1;
-	
 	return filestat(f, st);
 }
 
@@ -119,31 +118,59 @@ sys_fstat(void)
 int
 sys_chmod(void)
 {
-	struct file *f;
+	//struct file *f;
+	struct inode *ip;
+	char* path;
 	int mode;
 
-	if(argfd(0, 0, &f) < 0 || argint(1, &mode) < 0)
+	if(argstr(0, &path) < 0 || argint(1, &mode) < 0)
 		return -1;
 	struct proc * p = myproc();
-	if(p == 0 || !(p->euid == 0 || p->euid == f->ip->uid))
+	
+	begin_op();
+
+	if ((ip = namei(path)) == 0) {
+        end_op();
+        return -1;
+    }
+	if(p == 0 || !(p->euid == 0 || p->euid == ip->uid))
+	{
+		end_op();
 		return -1;
-	f->ip->mod = mode;
+	}
+	ilock(ip);
+	ip->mod = mode;
+	iunlock(ip);
+	end_op();
 	return 0;
 }
 
 int
 sys_chown(void)
 {
-	struct file *f;
+	struct inode *ip;
+	char* path;
 	int owner, group;
 
-	if(argfd(0, 0, &f) < 0  || argint(1, &owner) < 0 || argint(2, &group) < 0)
+	if(argstr(0, &path) < 0  || argint(1, &owner) < 0 || argint(2, &group) < 0)
 		return -1;
 	struct proc * p = myproc();
-	if(p == 0 || p->euid != 0)
+	begin_op();
+
+	if ((ip = namei(path)) == 0) {
+        end_op();
+        return -1;
+    }
+	if(p == 0 || !(p->euid == 0 || p->euid == ip->uid))
+	{
+		end_op();
 		return -1;
-	f->ip->uid = owner;
-	f->ip->gid = group;
+	}
+	ilock(ip);
+	ip->uid = owner;
+	ip->gid = group;
+	iunlock(ip);
+	end_op();
 	return 0;
 }
 
