@@ -61,6 +61,10 @@ int strSplit(char*, int, char**, int);
 #define GROUPNAMEMAXLEN 15
 #define GROUPUSERMAXLEN 20
 
+#define MAXUSERS 10
+#define MAXGROUPS 10
+
+
 struct user
 {
     char username[USERMAXLEN];
@@ -90,3 +94,5 @@ int removeUser(struct user* user);
 int updateGroup(struct group* group);
 int addGroup(struct group* group);
 int removeGroup(struct group* group);
+
+int getGroupsByUser(struct group* g , int* len, struct user* u);

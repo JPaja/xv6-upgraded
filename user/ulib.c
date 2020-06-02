@@ -299,8 +299,7 @@ int readGroup(struct group* g, char* buff, int n)
 }
 
 
-#define MAXUSERS 10
-#define MAXGROUPS 10
+
 
 int getUsers(struct user* u , int max)
 {
@@ -552,6 +551,33 @@ int getGroupByName(struct group* buffer, char * name)
 		}
 	}
     return 0;
+}
+
+int getGroupsByUser(struct group* g , int* len, struct user* u)
+{
+	*len = 0;
+	if(!getGroups(groups, MAXGROUPS))
+	 	return 0;
+	memset(g,0,sizeof(struct group) * MAXGROUPS);
+	for(int i = 0; i< MAXGROUPS; i++)
+	{
+		if(groups[i].gid < 0)
+			continue;
+		for (int j = 0; j < GROUPUSERMAXLEN; j++)
+		{
+			if(groups[i].users[j].uid < 0)
+				continue;
+			if(groups[i].users[j].uid == u->uid)
+			{
+				memmove(&g[*len], &groups[i], sizeof(struct group));
+				*len = *len + 1;
+				break;
+			}
+			
+		}
+		
+	}
+	return 1;
 }
 
 

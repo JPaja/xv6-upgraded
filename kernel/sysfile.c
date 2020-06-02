@@ -333,6 +333,13 @@ sys_open(void)
 			end_op();
 			return -1;
 		}
+		struct proc * p = myproc();
+		ip->mod =  644;
+		if(p != 0 ){
+			ip->uid = p->euid;
+			ip->gid = p->euid;;
+		}
+
 	} else {
 		if((ip = namei(path)) == 0){
 			end_op();
@@ -361,6 +368,7 @@ sys_open(void)
 	f->off = 0;
 	f->readable = !(omode & O_WRONLY);
 	f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
+	
 	return fd;
 }
 
@@ -375,6 +383,12 @@ sys_mkdir(void)
 		end_op();
 		return -1;
 	}
+	// struct proc * p = myproc();
+	// ip->mod =  644;
+	// if(p != 0 ){
+	// 	ip->uid = p->euid;
+	// 	ip->gid = p->euid;;
+	// }
 	iunlockput(ip);
 	end_op();
 	return 0;
