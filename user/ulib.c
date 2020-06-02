@@ -260,13 +260,13 @@ int readGroup(struct group* g, char* buff, int n)
 					memmove(g->name,b, bi);
 					break;
 				case 1:
-					g->gid = atoi(bi);
+					g->gid = atoi(b);
 					break;
 				default:
 					
 					if(!getUserByName(&u,b))
 						return 0; //greska pri ucitavanju usera;
-					memmove(&g->users[i], &u, sizeof(struct user));
+					memmove(&g->users[id - 2], &u, sizeof(struct user));
 					break;
 			}
 			bi = 0;
@@ -280,11 +280,11 @@ int readGroup(struct group* g, char* buff, int n)
 	if(id < 2)
     	return 0;
 	if(bi != 0)
-	{
+	{ 
 		struct user u;
 		if(!getUserByName(&u,b))
 			return 0; //greska pri ucitavanju usera;
-		memmove(&g->users[id], &u, sizeof(struct user));
+		memmove(&g->users[id - 2], &u, sizeof(struct user));
 	}
 	return 1;
 }
@@ -324,7 +324,7 @@ int getUsers(struct user* u , int max)
 
 int getGroups(struct group* g , int max)
 {
-	memset(g,0,sizeof(&g) * max);
+	memset(g,0,sizeof(struct group) * max);
 	for(int i = 0; i < MAXGROUPS; i++)
 	{
 		g[i].gid = -1;
@@ -337,9 +337,11 @@ int getGroups(struct group* g , int max)
 	int fdPasswd;
 	if((fdPasswd = open("/etc/group",0)) < 0)
 	{
-		printf("F3");
     	return 0;
 	}
+
+
+
 	char buff[512];
 	int i = 0; 
 	for(int i = 0 ; i < max; i++)
@@ -349,7 +351,6 @@ int getGroups(struct group* g , int max)
 			break;
 		if(!readGroup(&g[i], buff, n))
 		{
-			printf("koko");
 			close(fdPasswd);
     		return 0;
 		}
@@ -387,7 +388,7 @@ int writeGroups(struct group* g , int max)
 	int fdGroup;
 	if((fdGroup = open("/etc/group",O_CREATE | O_RDWR)) < 0)
 	{
-    	return 0;
+    	return 0; 
 	}
 	int ii =0;
 	for(int i = 0 ; i < max; i++)
