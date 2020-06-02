@@ -93,6 +93,7 @@ main(int argc, char *argv[])
 				exit();
 			}
 			dir = argv[i + 1];
+			i++;
 		}
 		else if(!strcmp(argv[i], "-u"))
 		{
@@ -112,6 +113,7 @@ main(int argc, char *argv[])
 				printf("Greska: -u uind ne sme da bude manji od 0\n");
 				exit();
 			}
+			i++;
 		}
 		else if(!strcmp(argv[i], "-c"))
 		{
@@ -126,6 +128,7 @@ main(int argc, char *argv[])
 				exit();
 			}
 			name = argv[i + 1];
+			i++;
 		}
 		else
 		{

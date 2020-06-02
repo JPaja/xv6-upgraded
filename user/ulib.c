@@ -279,10 +279,14 @@ int readGroup(struct group* g, char* buff, int n)
 		b[bi] = 0;
 	}
 
-	if(id < 2){
+	if(id < 1){
     	return 0;
 	}
-	if(bi != 0)
+	if(id == 1 && bi != 0)
+	{
+		g->gid = atoi(b);
+	}
+	else if(id == 2 && bi != 0)
 	{ 
 		struct user u;
 		if(!getUserByName(&u,b))
