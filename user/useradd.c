@@ -45,6 +45,8 @@ void useradd(char* dir, int uid, char* name, char* login)
 	g.gid = uid;
 	memset(g.users,0 , GROUPUSERMAXLEN * sizeof(struct user));
 	memmove(&g.users[0],&s,sizeof(struct user));
+	for(int i = 1; i < GROUPUSERMAXLEN; i++)
+		g.users[i].gid = -1;
 	if(!addGroup(&g))
 	{
 		printf("Greska pri dodavanju grupe");

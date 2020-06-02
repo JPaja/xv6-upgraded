@@ -248,15 +248,11 @@ int readGroup(struct group* g, char* buff, int n)
 	memset(b, 0, 512);
 	for(int i = 0 ; i< n; i++)
 	{
-		if(id > 6)
-			break; 
 		char c = buff[i];
 		if(c == ':' )
 		{
 			if(hasSpaces(b, bi))
-			{
     			return 0;//greska text ne sme da ima razmake
-			}
 			struct user u;
 			switch (id)
 			{
@@ -268,7 +264,7 @@ int readGroup(struct group* g, char* buff, int n)
 					break;
 				default:
 					
-					if(!getUserByName(&u,bi))
+					if(!getUserByName(&u,b))
 						return 0; //greska pri ucitavanju usera;
 					memmove(&g->users[i], &u, sizeof(struct user));
 					break;
@@ -282,13 +278,11 @@ int readGroup(struct group* g, char* buff, int n)
 	}
 
 	if(id < 2)
-	{
     	return 0;
-	}
 	if(bi != 0)
 	{
 		struct user u;
-		if(!getUserByName(&u,bi))
+		if(!getUserByName(&u,b))
 			return 0; //greska pri ucitavanju usera;
 		memmove(&g->users[id], &u, sizeof(struct user));
 	}
@@ -332,11 +326,18 @@ int getGroups(struct group* g , int max)
 {
 	memset(g,0,sizeof(&g) * max);
 	for(int i = 0; i < MAXGROUPS; i++)
+	{
 		g[i].gid = -1;
+		for (int j = 0; j < GROUPUSERMAXLEN; j++)
+		{
+			g[i].users[j].uid = -1;
+		}
+	}
 
 	int fdPasswd;
 	if((fdPasswd = open("/etc/group",0)) < 0)
 	{
+		printf("F3");
     	return 0;
 	}
 	char buff[512];
@@ -348,6 +349,7 @@ int getGroups(struct group* g , int max)
 			break;
 		if(!readGroup(&g[i], buff, n))
 		{
+			printf("koko");
 			close(fdPasswd);
     		return 0;
 		}
@@ -375,6 +377,33 @@ int writeUsers(struct user* u , int max)
 		fprintf(fdPasswd, "%s:%s:%d:%d:%s:%s", u[i].username,u[i].password,u[i].uid,u[i].gid,u[i].realName,u[i].home);
 	}
 	close(fdPasswd);
+	return 1;
+}
+
+int writeGroups(struct group* g , int max)
+{
+	unlink("/etc/group");
+	int fdGroup;
+	if((fdGroup = open("/etc/group",O_CREATE | O_RDWR)) < 0)
+	{
+    	return 0;
+	}
+	int ii =0;
+	for(int i = 0 ; i < max; i++)
+	{
+		if(g[i].gid < 0)
+			continue;
+		if(ii++ != 0)
+			fprintf(fdGroup,"\n");
+		fprintf(fdGroup, "%s:%d", g[i].name,g[i].gid);
+		for(int j = 0; j < GROUPUSERMAXLEN; j++)
+		{
+			if(g[i].users[j].uid < 0)
+				continue;
+			fprintf(fdGroup, ":%s", g[i].users[j].username);
+		}
+	}
+	close(fdGroup);
 	return 1;
 }
 
@@ -465,23 +494,80 @@ int loginUser(struct user* user, char * password)
 }
 int getGroup(struct group* buffer, int gid)
 {
+    if(!getGroups(groups, MAXGROUPS))
+	 	return 0;
+	for(int i = 0; i < MAXGROUPS; i++)
+	{
+		if(groups[i].gid == -1)
+			break;
+		if(groups[i].gid == gid)
+		{
+			memmove(buffer, &groups[i],sizeof(struct group));
+			return 1;
+		}
+	}
     return 0;
 }
 int getGroupByName(struct group* buffer, char * name)
 {
+     if(!getGroups(groups, MAXGROUPS))
+	 	return 0;
+	for(int i = 0; i < MAXGROUPS; i++)
+	{
+		if(groups[i].gid == -1)
+			break;
+		if(strcmp(groups[i].name, name) == 0)
+		{
+			memmove(buffer, &groups[i],sizeof(struct group));
+			return 1;
+		}
+	}
     return 0;
 }
 
 
 int updateGroup(struct group* group)
 {
+	if(!getGroups(groups, MAXGROUPS))
+	 	return 0;
+	for(int i = 0; i < MAXGROUPS;i++)
+	{
+		if(groups[i].gid == group->gid)
+		{
+			memmove(&groups[i], group,sizeof(struct group));
+			writeGroups(users, MAXUSERS);
+			return 1;
+		}
+	}
 	return 0;
 }
 int addGroup(struct group* group)
 {
+	if(!getGroups(groups, MAXGROUPS))
+	 	return 0;
+	for(int i = 0; i < MAXGROUPS;i++)
+	{
+		if(groups[i].gid < 0)
+		{
+			memmove(&groups[i], group,sizeof(struct group));
+			writeGroups(users, MAXUSERS);
+			return 1;
+		}
+	}
 	return 0;
 }
 int removeGroup(struct group* group)
 {
+	if(!getGroups(groups, MAXGROUPS))
+	 	return 0;
+	for(int i = 0; i < MAXGROUPS;i++)
+	{
+		if(groups[i].gid  == group->gid)
+		{
+			groups[i].gid = -1;
+			writeGroups(users, MAXUSERS);
+			return 1;
+		}
+	}
 	return 0;
 }
