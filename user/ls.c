@@ -59,11 +59,12 @@ ls(char *path)
 	}
 
 	char modebuff[11];
-
+	struct user u;
 	switch(st.type){
 	case T_FILE:
 		modestr(modebuff, st.mod, 0);
-		printf("%s %s %d %d %d\n",modebuff, fmtname(path), st.type, st.ino, st.size);
+		getUser(&u,st.uid);
+		printf("%s %s %s %d %d %d\n",modebuff,u.username, fmtname(path), st.type, st.ino, st.size);
 		break;
 
 	case T_DIR:
@@ -84,7 +85,8 @@ ls(char *path)
 				continue;
 			}
 			modestr(modebuff, st.mod, st.type == T_DIR);
-			printf("%s %s %d %d %d\n",modebuff, fmtname(buf), st.type, st.ino, st.size);
+			getUser(&u,st.uid);
+			printf("%s %s %s %d %d %d\n",modebuff,u.username, fmtname(buf), st.type, st.ino, st.size);
 		}
 		break;
 	}
