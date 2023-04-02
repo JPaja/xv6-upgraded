@@ -23,6 +23,9 @@ struct inode {
 	short nlink;
 	uint size;
 	uint addrs[NDIRECT+1];
+	int uid;
+	int gid;
+	int mod;
 };
 
 // table mapping major device number to
@@ -35,10 +38,3 @@ struct devsw {
 extern struct devsw devsw[];
 
 #define CONSOLE 1
-
-enum Whence
-{
-	SEEK_SET,
-	SEEK_CUR,
-	SEEK_END,
-};

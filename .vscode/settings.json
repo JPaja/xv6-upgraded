@@ -11,6 +11,18 @@
         "mmu.h": "c",
         "proc.h": "c",
         "x86.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "cstring": "c",
+        "typeinfo": "c",
+        "*.tcc": "c",
+        "numeric": "c",
+        "fstream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "system_error": "c",
+        "cstdio": "c",
+        "bitset": "c",
+        "chrono": "c",
+        "algorithm": "c"
     }
 }

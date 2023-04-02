@@ -2,7 +2,7 @@ B=bootloader
 K=kernel
 U=user
 T=tools
-D=$K/dev
+E=etc
 
 HDRS = \
 	$K/asm.h\
@@ -26,16 +26,9 @@ HDRS = \
 	$K/traps.h\
 	$K/types.h\
 	$K/x86.h\
-	$K/dev.h\
 	$U/user.h\
 
-
 OBJS = \
-	$D/null.o\
-	$D/zero.o\
-	$D/random.o\
-	$D/kmesg.o\
-	$D/disk.o\
 	$K/bio.o\
 	$K/console.o\
 	$K/exec.o\
@@ -59,7 +52,6 @@ OBJS = \
 	$K/syscall.o\
 	$K/sysfile.o\
 	$K/sysproc.o\
-	$K/sysconsole.o\
 	$K/trapasm.o\
 	$K/trap.o\
 	$K/uart.o\
@@ -183,7 +175,7 @@ tags: $(OBJS) $K/entryother.S $U/_init
 $K/vectors.S: $T/vectors.pl
 	$T/vectors.pl > $K/vectors.S
 
-ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
+ULIB = $U/printf.o $U/ulib.o $U/usys.o  $U/umalloc.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
@@ -191,7 +183,7 @@ _%: %.o $(ULIB)
 $U/_forktest: $U/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o $U/printf.o
 
 $T/mkfs: $T/mkfs.c $K/fs.h
 	gcc -Wall -I. -o $T/mkfs $T/mkfs.c
@@ -218,11 +210,23 @@ UPROGS=\
 	$U/_usertests\
 	$U/_wc\
 	$U/_zombie\
-	$U/_dd\
-	$U/_test\
+	$U/_getty\
+	$U/_passwd\
+	$U/_useradd\
+	$U/_groupadd\
+	$U/_usermod\
+	$U/_chmod\
+	$U/_chown\
+	$U/_chgrp\
 
-fs.img: $T/mkfs README $(UPROGS)
-	$T/mkfs fs.img README $(UPROGS)
+ETCFILES=\
+	$E/group\
+	$E/issue\
+	$E/motd\
+	$E/passwd\
+
+fs.img: $T/mkfs README $(UPROGS) $(ETCFILES) 
+	$T/mkfs fs.img README $(UPROGS) $(ETCFILES) 
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
@@ -243,10 +247,6 @@ endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 
 qemu: fs.img xv6.img
-	$(QEMU) $(QEMUOPTS)
-
-qemu-win: fs.img xv6.img
-	export DISPLAY=:0
 	$(QEMU) $(QEMUOPTS)
 
 qemu-memfs: xv6memfs.img

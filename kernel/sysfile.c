@@ -114,6 +114,66 @@ sys_fstat(void)
 	return filestat(f, st);
 }
 
+
+int
+sys_chmod(void)
+{
+	//struct file *f;
+	struct inode *ip;
+	char* path;
+	int mode;
+
+	if(argstr(0, &path) < 0 || argint(1, &mode) < 0)
+		return -1;
+	struct proc * p = myproc();
+	
+	begin_op();
+
+	if ((ip = namei(path)) == 0) {
+        end_op();
+        return -1;
+    }
+	if(p == 0 || !(p->euid == 0 || p->euid == ip->uid))
+	{
+		end_op();
+		return -1;
+	}
+	ilock(ip);
+	ip->mod = mode;
+	iunlock(ip);
+	end_op();
+	return 0;
+}
+
+int
+sys_chown(void)
+{
+	struct inode *ip;
+	char* path;
+	int owner, group;
+
+	if(argstr(0, &path) < 0  || argint(1, &owner) < 0 || argint(2, &group) < 0)
+		return -1;
+	struct proc * p = myproc();
+	begin_op();
+
+	if ((ip = namei(path)) == 0) {
+        end_op();
+        return -1;
+    }
+	if(p == 0 || !(p->euid == 0 || p->euid == ip->uid))
+	{
+		end_op();
+		return -1;
+	}
+	ilock(ip);
+	ip->uid = owner;
+	ip->gid = group;
+	iunlock(ip);
+	end_op();
+	return 0;
+}
+
 // Create the path new as a link to the same inode as old.
 int
 sys_link(void)
@@ -300,6 +360,13 @@ sys_open(void)
 			end_op();
 			return -1;
 		}
+		struct proc * p = myproc();
+		ip->mod =  644;
+		if(p != 0 ){
+			ip->uid = p->euid;
+			ip->gid = p->euid;;
+		}
+
 	} else {
 		if((ip = namei(path)) == 0){
 			end_op();
@@ -328,6 +395,7 @@ sys_open(void)
 	f->off = 0;
 	f->readable = !(omode & O_WRONLY);
 	f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
+	
 	return fd;
 }
 
@@ -342,6 +410,12 @@ sys_mkdir(void)
 		end_op();
 		return -1;
 	}
+	// struct proc * p = myproc();
+	// ip->mod =  644;
+	// if(p != 0 ){
+	// 	ip->uid = p->euid;
+	// 	ip->gid = p->euid;;
+	// }
 	iunlockput(ip);
 	end_op();
 	return 0;
@@ -442,13 +516,15 @@ sys_pipe(void)
 	return 0;
 }
 
-int sys_lseek(void)
+int
+sys_setecho(void)
 {
-	struct file *f;
-	int offset;
-	int whence;
-	if(argfd(0, 0, &f) < 0 || argint(1, &offset) < 0 || argint(2, &whence) < 0)
+	int value;
+
+	if(argint(0, &value) < 0 ){
 		return -1;
-	fileseek(f,offset,whence);
+	}
+	setEcho(value);
 	return 0;
 }
+
